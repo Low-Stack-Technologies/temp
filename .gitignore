@@ -1,6 +1,10 @@
 .idea/**/*
 .vscode/**/*
 
+server/.env
 server/tmp/**/*
+server/internal/db/db.go
+server/internal/db/models.go
+server/internal/db/*.sql.go
 
 cli/tmp/**/*
