@@ -22,7 +22,7 @@ func handleDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := parts[0]
-	file, databaseFile, err := storage.GetFile(id)
+	file, databaseFile, err := storage.GetFile(id, r.Context())
 	if err != nil || databaseFile == nil || file == nil {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return

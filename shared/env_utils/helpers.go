@@ -3,6 +3,7 @@ package env_utils
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 func GetEnvString(key string) string {
@@ -69,4 +70,14 @@ func GetEnvFilePath(key string, mustExist bool) string {
 	}
 
 	return value
+}
+
+func GetEnvDuration(key string) time.Duration {
+	strValue := GetEnvString(key)
+	duration, err := time.ParseDuration(strValue)
+	if err != nil {
+		panic("Environment variable " + key + " is not a valid duration")
+	}
+
+	return duration
 }

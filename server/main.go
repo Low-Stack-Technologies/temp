@@ -6,6 +6,7 @@ import (
 	"tech.low-stack.temp/server/internal/db"
 	"tech.low-stack.temp/server/internal/download"
 	"tech.low-stack.temp/server/internal/env"
+	"tech.low-stack.temp/server/internal/expiration"
 	"tech.low-stack.temp/server/internal/upload"
 )
 
@@ -14,6 +15,7 @@ func main() {
 
 	env.LoadVariables()
 	db.Initialize()
+	expiration.Initialize()
 
 	upload.Initialize()
 	download.Initialize()

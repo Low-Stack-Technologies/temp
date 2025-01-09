@@ -7,13 +7,18 @@ import (
 	"path"
 	"tech.low-stack.temp/server/internal/db"
 	"tech.low-stack.temp/server/internal/env"
+	"time"
 )
 
-func RequestNewFile(filename string, ctx context.Context) (io.WriteCloser, *db.File, error) {
+func RequestNewFile(filename string, expiration time.Duration, ctx context.Context) (io.WriteCloser, *db.File, error) {
 	id := newUuid()
 	qtx := db.NewQueries()
 
-	databaseFile, err := qtx.CreateFile(ctx, db.CreateFileParams{ID: id, Filename: filename})
+	databaseFile, err := qtx.CreateFile(ctx, db.CreateFileParams{
+		ID:        id,
+		Filename:  filename,
+		ExpiresAt: time.Now().Add(expiration),
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -27,10 +32,10 @@ func RequestNewFile(filename string, ctx context.Context) (io.WriteCloser, *db.F
 	return fileWriter, &databaseFile, nil
 }
 
-func GetFile(id string) (io.ReadCloser, *db.File, error) {
+func GetFile(id string, ctx context.Context) (io.ReadCloser, *db.File, error) {
 	qtx := db.NewQueries()
 
-	databaseFile, err := qtx.GetFile(context.Background(), id)
+	databaseFile, err := qtx.GetFile(ctx, id)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -42,6 +47,16 @@ func GetFile(id string) (io.ReadCloser, *db.File, error) {
 	}
 
 	return fileReader, &databaseFile, nil
+}
+
+func DeleteFile(id string, ctx context.Context) error {
+	qtx := db.NewQueries()
+
+	if err := os.Remove(GetStoragePath(id)); err != nil {
+		return err
+	}
+
+	return qtx.DeleteFile(ctx, id)
 }
 
 func GetStoragePath(id string) string {

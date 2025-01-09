@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"tech.low-stack.temp/server/internal/env"
 	"tech.low-stack.temp/server/internal/storage"
 )
 
@@ -24,7 +25,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer uploadedFile.Close()
 
-	file, databaseFile, err := storage.RequestNewFile(header.Filename, r.Context())
+	file, databaseFile, err := storage.RequestNewFile(header.Filename, env.DefaultExpiration, r.Context())
 	if err != nil {
 		http.Error(w, "Unable to request upload", http.StatusInternalServerError)
 		return
