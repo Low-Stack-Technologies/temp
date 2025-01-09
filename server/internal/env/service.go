@@ -1,6 +1,9 @@
 package env
 
-import _ "github.com/joho/godotenv/autoload"
+import (
+	_ "github.com/joho/godotenv/autoload"
+	"tech.low-stack.temp/shared/env_utils"
+)
 
 var (
 	HttpPort     int
@@ -10,8 +13,8 @@ var (
 )
 
 func LoadVariables() {
-	HttpPort = getEnvInt("HTTP_PORT")
-	StoragePath = getEnvDirPath("STORAGE_PATH", true)
-	DatabasePath = getEnvFilePath("DATABASE_PATH", false)
-	BaseUrl = getEnvString("BASE_URL")
+	HttpPort = env_utils.GetEnvInt("HTTP_PORT")
+	StoragePath = env_utils.GetEnvDirPath("STORAGE_PATH", true)
+	DatabasePath = env_utils.GetEnvFilePath("DATABASE_PATH", false)
+	BaseUrl = env_utils.GetEnvString("BASE_URL")
 }
