@@ -18,7 +18,7 @@ func main() {
 	downloadUrls := make([]string, len(filePaths))
 
 	for i, filePath := range filePaths {
-		fmt.Println(i)
+		fmt.Println()
 		wg.Add(1)
 		go func(path string, index int) {
 			defer wg.Done()
