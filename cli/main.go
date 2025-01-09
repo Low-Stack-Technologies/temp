@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"github.com/spf13/pflag"
 	"sync"
 	"tech.low-stack.temp/cli/internal/env"
 	"tech.low-stack.temp/cli/internal/upload"
@@ -12,9 +12,11 @@ import (
 func main() {
 	env.LoadVariables()
 
-	var wg sync.WaitGroup
+	expiration := pflag.DurationP("expiration", "e", time.Duration(0), "Set expiration time (e.g., 5h)")
+	pflag.Parse()
 
-	filePaths := os.Args[1:]
+	var wg sync.WaitGroup
+	filePaths := pflag.Args()
 	downloadUrls := make([]string, len(filePaths))
 
 	for i, filePath := range filePaths {
@@ -22,7 +24,7 @@ func main() {
 		wg.Add(1)
 		go func(path string, index int) {
 			defer wg.Done()
-			downloadUrl, err := upload.UploadFile(path, index)
+			downloadUrl, err := upload.UploadFile(path, index, *expiration)
 			if err != nil {
 				fmt.Printf("failed to upload file: %s\n", err)
 			}

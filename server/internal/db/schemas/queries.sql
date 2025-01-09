@@ -1,6 +1,6 @@
 -- name: CreateFile :one
 INSERT INTO files (id, filename, expires_at)
-VALUES (?, ?, ?)
+VALUES (?, ?, datetime('now', '+' || CAST(sqlc.arg(expiration) as INTEGER) || ' minutes'))
 RETURNING *;
 
 -- name: GetFile :one

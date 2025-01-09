@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"tech.low-stack.temp/cli/internal/env"
+	"time"
 )
 
 type ProgressReader struct {
@@ -20,7 +21,7 @@ type ProgressReader struct {
 	Percentage float64
 }
 
-func UploadFile(filePath string, index int) (string, error) {
+func UploadFile(filePath string, index int, expiration time.Duration) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", fmt.Errorf("unable to open file: %w", err)
@@ -40,9 +41,14 @@ func UploadFile(filePath string, index int) (string, error) {
 	go func() {
 		defer pw.Close()
 
-		// Create form field
+		// Create form file field
 		part, err := writer.CreateFormFile("file", filepath.Base(filePath))
 		if err != nil {
+			return
+		}
+
+		// Add expiration field to form
+		if err := writer.WriteField("expiration", expiration.String()); err != nil {
 			return
 		}
 

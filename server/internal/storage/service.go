@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"io"
+	"math"
 	"os"
 	"path"
 	"tech.low-stack.temp/server/internal/db"
@@ -15,9 +16,9 @@ func RequestNewFile(filename string, expiration time.Duration, ctx context.Conte
 	qtx := db.NewQueries()
 
 	databaseFile, err := qtx.CreateFile(ctx, db.CreateFileParams{
-		ID:        id,
-		Filename:  filename,
-		ExpiresAt: time.Now().Add(expiration),
+		ID:         id,
+		Filename:   filename,
+		Expiration: int64(math.Round(expiration.Minutes())),
 	})
 	if err != nil {
 		return nil, nil, err

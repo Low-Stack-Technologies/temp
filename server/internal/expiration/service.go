@@ -33,7 +33,7 @@ func expireFiles() error {
 			return err
 		}
 
-		log.Printf("Expired %s (%s)!", file.Filename, file.ID)
+		log.Printf("Expired %s (%s)", file.Filename, file.ID)
 	}
 
 	return nil
