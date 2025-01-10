@@ -45,6 +45,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'release' }}
-          tags: |
-            ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
-            ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:${{ env.RELEASE_TAG }}
+          tags: ${{ github.event_name == 'release' && format('ghcr.io/{0}/{1}:latest,ghcr.io/{0}/{1}:{2}', env.REPO_OWNER, env.REPO_NAME, env.RELEASE_TAG) || format('ghcr.io/{0}/{1}:latest', env.REPO_OWNER, env.REPO_NAME) }}
