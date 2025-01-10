@@ -14,7 +14,24 @@ function Get-Architecture {
 # Set variables
 $arch = Get-Architecture
 $installDir = "$env:LOCALAPPDATA\temp"
-$downloadUrl = "https://github.com/low-stack/temp/releases/latest/download/temp-windows-$arch.exe"
+
+# Fetch latest release URL from GitHub API
+try {
+    Write-Host "Fetching latest release..."
+    $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/low-stack-technologies/temp/releases"
+    $downloadUrl = $releases[0].assets |
+        Where-Object { $_.browser_download_url -like "*temp-windows-$arch.exe" } |
+        Select-Object -ExpandProperty browser_download_url -First 1
+
+    if (-not $downloadUrl) {
+        Write-Host "Failed to find appropriate release for windows-$arch"
+        exit 1
+    }
+}
+catch {
+    Write-Host "Failed to fetch latest release: $_"
+    exit 1
+}
 
 # Create installation directory if it doesn't exist
 New-Item -ItemType Directory -Force -Path $installDir | Out-Null

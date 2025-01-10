@@ -26,7 +26,13 @@ get_os_arch() {
 
 # Get OS and architecture
 OS_ARCH=$(get_os_arch)
-BASE_URL="https://github.com/low-stack/temp/releases/latest/download/temp"
+
+# Fetch latest release URL from GitHub API
+LATEST_RELEASE_URL=$(curl -s https://api.github.com/repos/low-stack-technologies/temp/releases | grep "browser_download_url.*temp-${OS_ARCH}" | head -n 1 | cut -d '"' -f 4)
+
+if [ -z "$LATEST_RELEASE_URL" ]; then
+    echo "Failed to fetch latest release URL" && exit 1
+fi
 
 case $OS_ARCH in
     "linux-amd64"|"linux-arm64")
@@ -34,7 +40,7 @@ case $OS_ARCH in
         mkdir -p "$INSTALL_DIR"
 
         # Download binary
-        curl -L "${BASE_URL}-${OS_ARCH}" -o "$INSTALL_DIR/temp"
+        curl -L "$LATEST_RELEASE_URL" -o "$INSTALL_DIR/temp"
         chmod +x "$INSTALL_DIR/temp"
 
         # Add to PATH if not already present
@@ -53,7 +59,7 @@ case $OS_ARCH in
         INSTALL_DIR="/usr/local/bin"
 
         # Download binary
-        sudo curl -L "${BASE_URL}-${OS_ARCH}" -o "$INSTALL_DIR/temp"
+        sudo curl -L "$LATEST_RELEASE_URL" -o "$INSTALL_DIR/temp"
         sudo chmod +x "$INSTALL_DIR/temp"
         echo "Installation complete - binary installed to $INSTALL_DIR"
         ;;
@@ -63,7 +69,7 @@ case $OS_ARCH in
         mkdir -p "$INSTALL_DIR"
 
         # Download binary
-        curl -L "${BASE_URL}-${OS_ARCH}.exe" -o "$INSTALL_DIR/temp.exe"
+        curl -L "$LATEST_RELEASE_URL" -o "$INSTALL_DIR/temp.exe"
 
         # Add to PATH using PowerShell
         powershell.exe -Command "[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path', 'User') + ';$INSTALL_DIR', 'User')"
