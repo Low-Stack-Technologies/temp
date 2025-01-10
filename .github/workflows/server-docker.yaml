@@ -32,12 +32,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
+      - name: Prepare Docker image tag variables
+        run: |
+          echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "REPO_NAME=$(echo ${{ github.event.repository.name }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "RELEASE_TAG=$(echo ${{ github.event.release.tag_name }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build AMD64 & ARM64 images and push
         uses: docker/build-push-action@v4.0.0
-        env:
-          REPO_OWNER: ${{ lower(github.repository_owner) }}
-          REPO_NAME: ${{ lower(github.event.repository.name) }}
-          RELEASE_TAG: ${{ lower(github.event.release.tag_name) }}
         with:
           file: Server.Dockerfile
           context: .
