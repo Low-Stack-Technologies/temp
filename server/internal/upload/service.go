@@ -28,6 +28,9 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer uploadedFile.Close()
 
+	// Log file info
+	log.Printf("Received file: %s, size: %d", header.Filename, header.Size)
+
 	// Parse expiration duration
 	expirationStr := r.FormValue("expiration")
 	expiration, err := time.ParseDuration(expirationStr)
@@ -41,7 +44,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create filed in database and get io writer
+	// Create file in database and get io writer
 	file, databaseFile, err := storage.RequestNewFile(header.Filename, expiration, r.Context())
 	if err != nil {
 		http.Error(w, "Unable to request upload", http.StatusInternalServerError)
