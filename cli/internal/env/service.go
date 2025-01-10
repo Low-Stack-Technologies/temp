@@ -10,5 +10,5 @@ var (
 )
 
 func LoadVariables() {
-	ServiceUrl = env_utils.GetEnvStringWithDefault("TEMP_SERVICE_URL", "http://localhost:8080")
+	ServiceUrl = env_utils.GetEnvStringWithDefault("TEMP_SERVICE_URL", "https://temp.low-stack.tech")
 }
