@@ -34,11 +34,15 @@ jobs:
 
       - name: Build AMD64 & ARM64 images and push
         uses: docker/build-push-action@v4.0.0
+        env:
+          REPO_OWNER: ${{ lower(github.repository_owner) }}
+          REPO_NAME: ${{ lower(github.event.repository.name) }}
+          RELEASE_TAG: ${{ lower(github.event.release.tag_name) }}
         with:
           file: Server.Dockerfile
           context: .
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'release' }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ github.event.release.tag_name }}
+            ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:latest
+            ghcr.io/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}:${{ env.RELEASE_TAG }}
