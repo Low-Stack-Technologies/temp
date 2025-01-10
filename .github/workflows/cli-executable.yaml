@@ -41,7 +41,7 @@ jobs:
           else
             echo "EXTENSION=" >> $GITHUB_ENV
           fi
-          go build -v -o ${{ github.event.repository.name }}-${{ matrix.os }}-${{ matrix.arch }}${{ env.EXTENSION }} ./cli
+          go build -v -o ${{ github.event.repository.name }}-${{ matrix.os }}-${{ matrix.arch }} ./cli
 
       - name: Upload artifact
         if: github.event_name == 'release'
@@ -50,6 +50,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ github.event.repository.name }}-${{ matrix.os }}-${{ matrix.arch }}${{ env.EXTENSION }}
+          asset_path: ./${{ github.event.repository.name }}-${{ matrix.os }}-${{ matrix.arch }}
           asset_name: ${{ github.event.repository.name }}-${{ matrix.os }}-${{ matrix.arch }}${{ env.EXTENSION }}
           asset_content_type: application/octet-stream
