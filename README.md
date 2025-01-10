@@ -27,13 +27,13 @@ iwr -useb https://raw.githubusercontent.com/low-stack-technologies/temp/main/ins
 To upload a file, simply run the following command:
 
 ```bash
-temp upload file.txt
+temp file.txt
 ```
 
 This will upload the file `file.txt` and print the download link. You can also specify an expiration time:
 
 ```bash
-temp upload file.txt --expiration 1h
+temp file.txt --expiration 1h
 ```
 
 This will upload the file `file.txt` and print the download link.
@@ -43,7 +43,7 @@ This will upload the file `file.txt` and print the download link.
 You can upload multiple files by specifying multiple file paths:
 
 ```bash
-temp upload file1.txt file2.txt
+temp file1.txt file2.txt
 ```
 
 This will upload both `file1.txt` and `file2.txt` and print the download links.
