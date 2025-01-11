@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	"github.com/ricochet2200/go-disk-usage/du"
 	"io"
 	"math"
 	"os"
@@ -58,6 +60,15 @@ func DeleteFile(id string, ctx context.Context) error {
 	}
 
 	return qtx.DeleteFile(ctx, id)
+}
+
+func GetFreeSpace() (uint64, error) {
+	diskUsage := du.NewDiskUsage(env.StoragePath)
+	if diskUsage == nil {
+		return 0, fmt.Errorf("failed to get disk usage")
+	}
+
+	return diskUsage.Free(), nil
 }
 
 func GetStoragePath(id string) string {

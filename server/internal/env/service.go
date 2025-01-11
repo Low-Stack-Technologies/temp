@@ -8,9 +8,11 @@ import (
 
 var (
 	HttpPort     int
-	StoragePath  string
 	DatabasePath string
 	BaseUrl      string
+
+	StoragePath  string
+	MinFreeSpace uint64
 
 	DefaultExpiration time.Duration
 	MaxExpiration     time.Duration
@@ -19,9 +21,11 @@ var (
 
 func LoadVariables() {
 	HttpPort = env_utils.GetEnvInt("HTTP_PORT")
-	StoragePath = env_utils.GetEnvDirPath("STORAGE_PATH", true)
 	DatabasePath = env_utils.GetEnvFilePath("DATABASE_PATH", false)
 	BaseUrl = env_utils.GetEnvString("BASE_URL")
+
+	StoragePath = env_utils.GetEnvDirPath("STORAGE_PATH", true)
+	MinFreeSpace = env_utils.GetEnvSize("MIN_FREE_SPACE")
 
 	DefaultExpiration = env_utils.GetEnvDuration("DEFAULT_EXPIRATION")
 	MaxExpiration = env_utils.GetEnvDuration("MAX_EXPIRATION")

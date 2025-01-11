@@ -1,6 +1,7 @@
 package env_utils
 
 import (
+	"github.com/dustin/go-humanize"
 	"os"
 	"strconv"
 	"time"
@@ -80,4 +81,14 @@ func GetEnvDuration(key string) time.Duration {
 	}
 
 	return duration
+}
+
+func GetEnvSize(key string) uint64 {
+	strValue := GetEnvString(key)
+	size, err := humanize.ParseBytes(strValue)
+	if err != nil {
+		panic("Environment variable " + key + " is not a valid size")
+	}
+
+	return size
 }
