@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"tech.low-stack.temp/server/internal/storage"
 )
@@ -29,8 +30,15 @@ func handleDownload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	fileStat, err := os.Stat(storage.GetStoragePath(databaseFile.ID))
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", databaseFile.Filename))
 	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileStat.Size()))
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = io.Copy(w, file)
