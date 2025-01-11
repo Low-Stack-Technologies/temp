@@ -8,3 +8,4 @@ server/internal/db/models.go
 server/internal/db/*.sql.go
 
 cli/tmp/**/*
+cli/internal/update/version
