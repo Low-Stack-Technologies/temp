@@ -31,6 +31,14 @@ jobs:
         with:
           go-version: 1.23.4
 
+      - name: Embed release name
+        if: github.event_name == 'release'
+        run: echo "${{ github.event.release.tag_name }}" > cli/internal/update/version
+
+      - name: Embed dummy version
+        if: github.event_name != 'release'
+        run: echo "v0.0.0" > cli/internal/update/version
+
       - name: Build
         env:
           GOOS: ${{ matrix.os }}
