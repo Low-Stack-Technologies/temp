@@ -78,9 +78,11 @@ services:
       - 8080:8080
     environment:
       - HTTP_PORT=8080 # The port to listen on
-      - STORAGE_PATH=/data # The path to the storage directory
       - DATABASE_PATH=/data/temp-server-database.db # The path to the database file
-      - BASE_URL=https://temp.example.com # The URL of your Temp Server
+      - BASE_URL=https://temp.example.com # The URL of your Temp Server, no trailing slash
+      
+      - STORAGE_PATH=/data # The path to the storage directory
+      - MIN_FREE_SPACE=1G # The minimum free space required to be left after uploading a file
 
       - DEFAULT_EXPIRATION=24h # Default expiration time
       - MAX_EXPIRATION=72h # Longest allowed expiration time
@@ -96,9 +98,10 @@ services:
 docker run -d \
   -p 8080:8080 \
   -e HTTP_PORT=8080 \
-  -e STORAGE_PATH=/data \
   -e DATABASE_PATH=/data/temp-server-database.db \
   -e BASE_URL=https://temp.example.com \
+  -e STORAGE_PATH=/data \
+  -e MIN_FREE_SPACE=1G \
   -e DEFAULT_EXPIRATION=24h \
   -e MAX_EXPIRATION=72h \
   -e MIN_EXPIRATION=15m \
