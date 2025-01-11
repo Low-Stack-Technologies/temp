@@ -30,6 +30,12 @@ To upload a file, simply run the following command:
 temp file.txt
 ```
 
+If you are on Windows, you can use the following command:
+
+```powershell
+temp.exe file.txt
+```
+
 This will upload the file `file.txt` and print the download link. You can also specify an expiration time:
 
 ```bash
