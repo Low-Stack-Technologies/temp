@@ -35,13 +35,14 @@ jobs:
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
         run: |
           if [ "${{matrix.os}}" = "windows" ]; then
             echo "EXTENSION=.exe" >> $GITHUB_ENV
           else
             echo "EXTENSION=" >> $GITHUB_ENV
           fi
-          go build -v -o ${{ github.event.repository.name }}-${{ matrix.os }}-${{ matrix.arch }} ./cli
+          go build -v -ldflags="-static" -o ${{ github.event.repository.name }}-${{ matrix.os }}-${{ matrix.arch }} ./cli
 
       - name: Upload artifact
         if: github.event_name == 'release'
