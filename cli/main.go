@@ -5,12 +5,14 @@ import (
 	"github.com/spf13/pflag"
 	"sync"
 	"tech.low-stack.temp/cli/internal/env"
+	"tech.low-stack.temp/cli/internal/update"
 	"tech.low-stack.temp/cli/internal/upload"
 	"time"
 )
 
 func main() {
 	env.LoadVariables()
+	update.CheckVersion()
 
 	expiration := pflag.DurationP("expiration", "e", time.Duration(0), "Set expiration time (e.g., 5h)")
 	pflag.Parse()
