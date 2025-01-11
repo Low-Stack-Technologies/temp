@@ -12,6 +12,7 @@ var (
 	BaseUrl      string
 
 	StoragePath  string
+	MaxFileSize  uint64
 	MinFreeSpace uint64
 
 	DefaultExpiration time.Duration
@@ -25,6 +26,7 @@ func LoadVariables() {
 	BaseUrl = env_utils.GetEnvString("BASE_URL")
 
 	StoragePath = env_utils.GetEnvDirPath("STORAGE_PATH", true)
+	MaxFileSize = env_utils.GetEnvSize("MAX_FILE_SIZE")
 	MinFreeSpace = env_utils.GetEnvSize("MIN_FREE_SPACE")
 
 	DefaultExpiration = env_utils.GetEnvDuration("DEFAULT_EXPIRATION")

@@ -82,6 +82,7 @@ services:
       - BASE_URL=https://temp.example.com # The URL of your Temp Server, no trailing slash
       
       - STORAGE_PATH=/data # The path to the storage directory
+      - MAX_FILE_SIZE=10G # The maximum file size allowed
       - MIN_FREE_SPACE=1G # The minimum free space required to be left after uploading a file
 
       - DEFAULT_EXPIRATION=24h # Default expiration time
@@ -101,6 +102,7 @@ docker run -d \
   -e DATABASE_PATH=/data/temp-server-database.db \
   -e BASE_URL=https://temp.example.com \
   -e STORAGE_PATH=/data \
+  -e MAX_FILE_SIZE=10G \
   -e MIN_FREE_SPACE=1G \
   -e DEFAULT_EXPIRATION=24h \
   -e MAX_EXPIRATION=72h \

@@ -1,10 +1,8 @@
 package upload
 
 import (
-	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -23,21 +21,12 @@ type ProgressReader struct {
 }
 
 func UploadFile(filePath string, index int, expiration time.Duration) (string, error) {
+	// Open file to upload
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", fmt.Errorf("unable to open file: %w", err)
 	}
 	defer file.Close()
-
-	// Create the body using a buffer instead of a pipe
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	// Create form file field
-	part, err := writer.CreateFormFile("file", filepath.Base(filePath))
-	if err != nil {
-		return "", fmt.Errorf("failed to create form file: %w", err)
-	}
 
 	// Get file stats for progress calculation
 	fileStats, err := file.Stat()
@@ -45,6 +34,10 @@ func UploadFile(filePath string, index int, expiration time.Duration) (string, e
 		return "", fmt.Errorf("unable to read file stats: %w", err)
 	}
 	fileSize := fileStats.Size()
+
+	// Create pipe for streaming contents
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
 
 	// Create progress reader
 	progress := &ProgressReader{
@@ -57,23 +50,33 @@ func UploadFile(filePath string, index int, expiration time.Duration) (string, e
 	// Add progress reader to progress readers
 	progressBars = append(progressBars, progress)
 
-	// Copy file to multipart writer through progress reader
-	if _, err := io.Copy(part, progress); err != nil {
-		return "", fmt.Errorf("failed to copy file: %w", err)
-	}
+	// Write the multipart form in a goroutine
+	go func() {
+		defer pw.Close()
+		defer writer.Close()
 
-	// Add expiration field to form
-	if err := writer.WriteField("expiration", expiration.String()); err != nil {
-		return "", fmt.Errorf("failed to add expiration field: %w", err)
-	}
+		// Create form file field
+		part, err := writer.CreateFormFile("file", filepath.Base(filePath))
+		if err != nil {
+			pw.CloseWithError(fmt.Errorf("failed to create form file: %w", err))
+			return
+		}
 
-	// Close the writer
-	if err := writer.Close(); err != nil {
-		return "", fmt.Errorf("failed to close writer: %w", err)
-	}
+		// Copy file to multipart writer through progress reader
+		if _, err := io.Copy(part, progress); err != nil {
+			pw.CloseWithError(fmt.Errorf("failed to copy file: %w", err))
+			return
+		}
+
+		// Add expiration field to form
+		if err := writer.WriteField("expiration", expiration.String()); err != nil {
+			pw.CloseWithError(fmt.Errorf("failed to add expiration field: %w", err))
+			return
+		}
+	}()
 
 	// Create request
-	req, err := http.NewRequest("POST", env.ServiceUrl, body)
+	req, err := http.NewRequest("POST", env.ServiceUrl, pr)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
@@ -88,7 +91,7 @@ func UploadFile(filePath string, index int, expiration time.Duration) (string, e
 	defer resp.Body.Close()
 
 	// Read response body
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
