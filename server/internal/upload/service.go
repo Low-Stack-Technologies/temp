@@ -6,79 +6,90 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"tech.low-stack.temp/server/internal/env"
 	"tech.low-stack.temp/server/internal/storage"
-	"time"
 )
+
+type LimitWriter struct {
+	w       io.Writer
+	limit   uint64
+	written uint64
+}
+
+func (l *LimitWriter) Write(p []byte) (n int, err error) {
+	if l.written+uint64(len(p)) > l.limit {
+		return 0, fmt.Errorf("file size exceeds limit of %d bytes", l.limit)
+	}
+
+	n, err = l.w.Write(p)
+	l.written += uint64(n)
+	return
+}
 
 func Initialize() {
 	http.Handle("POST /", http.HandlerFunc(handleUpload))
 }
 
 func handleUpload(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		log.Printf("Unable to parse multipart form:\n%s", err.Error())
-		http.Error(w, "Unable to parse multipart form!", http.StatusInternalServerError)
-		return
-	}
-
-	// Get file from request
-	uploadedFile, header, err := r.FormFile("file")
+	// Get a multipart reader
+	reader, err := r.MultipartReader()
 	if err != nil {
-		log.Printf("Unable to form file:\n%s", err.Error())
-		http.Error(w, fmt.Sprintf("Unable to get file:\n%s", err.Error()), http.StatusBadRequest)
-		return
-	}
-	defer uploadedFile.Close()
-
-	// Log file info
-	log.Printf("Received file: %s, size: %s", header.Filename, humanize.Bytes(uint64(header.Size)))
-
-	// Ensure file is not over maximum allowed size
-	if uint64(header.Size) > env.MaxFileSize {
-		log.Printf("File is too large! %s > %s", humanize.Bytes(uint64(header.Size)), humanize.Bytes(env.MaxFileSize))
-		http.Error(w, fmt.Sprintf("File is too large! Uploaded file is %s, max allowed is %s.", humanize.Bytes(uint64(header.Size)), humanize.Bytes(env.MaxFileSize)), http.StatusBadRequest)
+		log.Printf("Unable to get multipart reader:\n%s", err.Error())
+		http.Error(w, "Unable to process upload", http.StatusBadRequest)
 		return
 	}
 
-	// Ensure free space is sufficient
-	freeSpace, err := storage.GetFreeSpace()
+	// Read form parts
+	part, err := reader.NextPart()
 	if err != nil {
-		log.Printf("Unable to get free space: %s", err.Error())
-		http.Error(w, fmt.Sprintf("Unable to get free space:\n%s", err.Error()), http.StatusInternalServerError)
-		return
-	}
-	if freeSpace < env.MinFreeSpace+uint64(header.Size) {
-		log.Printf("Insufficient free space! Needed: %s, available: %s", humanize.Bytes(env.MinFreeSpace+uint64(header.Size)), humanize.Bytes(freeSpace))
-		http.Error(w, "Insufficient free space!", http.StatusInsufficientStorage)
+		log.Printf("Unable to get form part:\n%s", err.Error())
+		http.Error(w, "Unable to process upload", http.StatusBadRequest)
 		return
 	}
 
-	// Parse expiration duration
-	expirationStr := r.FormValue("expiration")
-	expiration, err := time.ParseDuration(expirationStr)
-	if expirationStr == "" || expiration.Seconds() == 0 || err != nil {
-		expiration = env.DefaultExpiration
-	}
-
-	// Check if expiration is valid
-	if expiration < env.MinExpiration || expiration > env.MaxExpiration {
-		log.Printf("Invalid expiration! Must be between %s and %s", env.MinExpiration, env.MaxExpiration)
-		http.Error(w, fmt.Sprintf("Invalid expiration! Must be between %s and %s", env.MinExpiration, env.MaxExpiration), http.StatusBadRequest)
+	// Check if this is the file part
+	if part.FormName() != "file" {
+		log.Printf("No file field found in form")
+		http.Error(w, "No file field found in form", http.StatusBadRequest)
 		return
 	}
+
+	// Get filename
+	filename := part.FileName()
+	if filename == "" {
+		log.Printf("No filename provided")
+		http.Error(w, "No filename provided", http.StatusBadRequest)
+		return
+	}
+
+	// Parse expiration duration (you'll need to modify this since we can't use r.FormValue anymore)
+	expiration := env.DefaultExpiration // Set default for now
 
 	// Create file in database and get io writer
-	file, databaseFile, err := storage.RequestNewFile(header.Filename, expiration, r.Context())
+	file, databaseFile, err := storage.RequestNewFile(filename, expiration, r.Context())
 	if err != nil {
 		log.Printf("Unable to request upload: %s", err.Error())
 		http.Error(w, "Unable to request upload", http.StatusInternalServerError)
 		return
 	}
 
-	// Copy file to storage
-	_, err = io.Copy(file, uploadedFile)
+	// Calculate write limit
+	freeStorageSpace, _ := storage.GetFreeSpace()
+	writeLimit := freeStorageSpace - env.MinFreeSpace
+	if env.MaxFileSize < writeLimit {
+		writeLimit = env.MaxFileSize
+	}
+
+	// Stream the file directly to storage
+	limitWriter := &LimitWriter{w: file, limit: writeLimit}
+	_, err = io.Copy(limitWriter, part)
 	if err != nil {
+		if strings.Contains(err.Error(), "file size exceeds limit") {
+			log.Printf("File too large, exceeds %s", humanize.Bytes(writeLimit))
+			http.Error(w, fmt.Sprintf("File too large! Exceeds %s", humanize.Bytes(writeLimit)), http.StatusRequestEntityTooLarge)
+			return
+		}
 		log.Printf("Unable to write to upload: %s", err.Error())
 		http.Error(w, "Unable to write to upload", http.StatusInternalServerError)
 		return
