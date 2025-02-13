@@ -1,12 +1,20 @@
-# Check if running with administrator privileges
-$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
 # Function to handle errors consistently
 function Write-ErrorAndExit {
     param([string]$message)
     Write-Host "Error: $message" -ForegroundColor Red
     Write-Host "Please contact support if this issue persists." -ForegroundColor Yellow
     exit 1
+}
+
+# Remove Explorer Contect Menu
+Write-Host "Removing Context menu entry..."
+try {
+    # No admin rights needed for this version
+    Remove-Item -Path "Registry::HKEY_CURRENT_USER\Software\Classes\*\shell\TempUpload" -Recurse -Force
+    Write-Host "Context menu entry removed successfully."
+}
+catch {
+    Write-Host "Error: $($_.Exception.Message)"
 }
 
 # Function to remove profile function and aliases
@@ -159,7 +167,7 @@ try {
     }
 
     Write-Host "`nUninstallation completed successfully!" -ForegroundColor Green
-    Write-Host "Please restart your terminal for the changes to take effect." -ForegroundColor Yellow
+    Write-Host "Please restart your terminal and Windows Explorer for the changes to take effect." -ForegroundColor Yellow
 }
 catch {
     Write-ErrorAndExit "An unexpected error occurred: $_"

@@ -82,7 +82,46 @@ function upload-temp {
         Set-Content $profilePath $aliasFunction
     }
 
-    Write-Host "Installation complete - please restart your PowerShell terminal"
+    Write-Host "Installing Context menu entry..."
+    try {
+        # No admin rights needed for this version
+        $registryPath = "Registry::HKEY_CURRENT_USER\Software\Classes\*\shell\TempUpload"
+    
+        # Create the main menu item quietly
+        $null = New-Item -Path $registryPath -Force
+        $null = New-ItemProperty -Path $registryPath -Name "MUIVerb" -Value "Temporary Upload (24h)" -PropertyType String -Force
+    
+        # Create the command subkey quietly
+        $null = New-Item -Path "$registryPath\command" -Force
+    
+        # Define the command script separately to avoid nesting issues
+        $commandScript = 'powershell.exe -Command "' + `
+            'Add-Type -AssemblyName System.Windows.Forms;' + `
+            'try {' + `
+            '    $filePath = [System.IO.Path]::GetFullPath(''%1'');' + `
+            '    Write-Host "Uploading $filePath";' + `
+            '    $result = & upload-temp $filePath --expiration 24h | Out-String;' + `
+            '    $url = $result | Select-String -Pattern ''https://.*'' | ForEach-Object { $_.Matches[0].Value };' + `
+            '    if ($url) {' + `
+            '        [System.Windows.Forms.Clipboard]::SetText($url);' + `
+            '        [System.Windows.Forms.MessageBox]::Show(''Download URL copied to clipboard'', ''Upload complete'', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information);' + `
+            '    } else {' + `
+            '        [System.Windows.Forms.MessageBox]::Show(''Upload failed - No URL found in output'', ''Warning'', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning);' + `
+            '    }' + `
+            '} catch {' + `
+            '    [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, ''Error'', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error);' + `
+            '}"'
+    
+        # Set the command
+        $null = New-ItemProperty -Path "$registryPath\command" -Name "(Default)" -Value $commandScript -PropertyType String -Force
+    
+        Write-Host "Context menu entry added successfully."
+    }
+    catch {
+        Write-Host "Error: $($_.Exception.Message)"
+    }
+
+    Write-Host "Installation complete - please restart your terminal and Windows Explorer"
 }
 catch {
     Write-Host "An error occurred: $_"
