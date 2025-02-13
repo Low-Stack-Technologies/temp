@@ -1,6 +1,9 @@
 name: Build and CLI executables
 
 on:
+  push:
+    branches:
+      - main
   release:
     types: [created]
 
