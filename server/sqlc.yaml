@@ -7,3 +7,9 @@ sql:
       go:
         package: "db"
         out: "./internal/db"
+        overrides:
+          - db_type: "TEXT"
+            nullable: true
+            go_type:
+              type: "string"
+              pointer: true

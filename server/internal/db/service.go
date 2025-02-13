@@ -5,8 +5,10 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
-	migrate "github.com/rubenv/sql-migrate"
 	"log"
+	"sync"
+
+	migrate "github.com/rubenv/sql-migrate"
 	_ "modernc.org/sqlite"
 	"tech.low-stack.temp/server/internal/env"
 )
@@ -14,7 +16,10 @@ import (
 //go:embed schemas/migrations/*.sql
 var migrationsFs embed.FS
 
-var databaseConnection *sql.DB
+var (
+	databaseConnection *sql.DB
+	dbMutex            sync.Mutex
+)
 
 func Initialize() {
 	db, err := sql.Open("sqlite", env.DatabasePath)
@@ -33,9 +38,15 @@ func Initialize() {
 	}
 	log.Printf("Applied %d migrations\n", n)
 
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxLifetime(0)
+
 	databaseConnection = db
 }
 
 func NewQueries() *Queries {
+	dbMutex.Lock()
+	defer dbMutex.Unlock()
 	return New(databaseConnection)
 }

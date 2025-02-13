@@ -3,9 +3,10 @@ package expiration
 import (
 	"context"
 	"log"
+	"time"
+
 	"tech.low-stack.temp/server/internal/db"
 	"tech.low-stack.temp/server/internal/storage"
-	"time"
 )
 
 func Initialize() {
@@ -33,7 +34,11 @@ func expireFiles() error {
 			return err
 		}
 
-		log.Printf("Expired %s (%s)", file.Filename, file.ID)
+		if file.Filename != nil {
+			log.Printf("Expired %s (%s)", *file.Filename, file.ID)
+		} else {
+			log.Printf("Expired (%s)", file.ID)
+		}
 	}
 
 	return nil
