@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Temp - File Upload</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="./assets/css/pico/pico.min.css">
+    <style>
+      main.container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      
+      .upload-container {
+        text-align: center;
+        margin: 2rem 0;
+        width: 100%;
+        max-width: 500px; /* Added fixed max-width for consistency */
+      }
+
+      .upload-area {
+        border: 2px dashed #666;
+        border-radius: 10px;
+        padding: 2rem;
+        cursor: pointer;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+      }
+
+      .upload-area:hover {
+        border-color: #1095c1;
+        background-color: rgba(16, 149, 193, 0.1);
+      }
+
+      .upload-area svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 1rem;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .file-label {
+        display: block;
+        margin: 1rem 0;
+        color: #666;
+      }
+
+      button[type="submit"] {
+        width: 100%;
+      }
+
+      .expiration-select {
+        margin: 1rem 0;
+        width: 100%;
+      }
+
+      select {
+        width: 100%;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Temp</h1>
+      <form id="uploadForm" action="/" method="post" enctype="multipart/form-data">
+        <div class="upload-container">
+          <div class="upload-area" id="dropZone">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p>Click to upload or drag and drop</p>
+            <p id="selectedFileName" style="margin-top: 0.5rem; font-size: 0.9em;"></p>
+            <span class="file-label">Supported files: All</span>
+            <input type="file" id="fileInput" name="file" class="file-input" required>
+          </div>
+          <div class="expiration-select">
+            <select id="expirationTime" name="expiration" required>
+              <option value="" disabled selected>Select expiration time</option>
+            </select>
+          </div>
+          <button type="submit">Upload File</button>
+        </div>
+      </form>
+
+      <div id="uploadStatus" style="margin-top: 1rem; text-align: center;"></div>
+    </main>
+
+    <script>
+      const minimumExpirationTimeSeconds = /*MINIMUM_EXPIRATION_TIME_SECONDS*/; // Automatically replaced by the server
+      const maximumExpirationTimeSeconds = /*MAXIMUM_EXPIRATION_TIME_SECONDS*/; // Automatically replaced by the server
+    </script>
+
+    <script src="./assets/js/file-upload.js"></script>
+    <script src="./assets/js/expiration-options.js"></script>
+
+    <script>
+      document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const statusDiv = document.getElementById('uploadStatus');
+        const submitButton = form.querySelector('button[type="submit"]');
+        
+        const formData = new FormData(form);
+        
+        submitButton.setAttribute('aria-busy', 'true');
+        submitButton.disabled = true;
+        statusDiv.innerHTML = 'Uploading...';
+        
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (response.ok) {
+            const url = await response.text();
+            statusDiv.innerHTML = `
+              <p>File uploaded successfully!</p>
+              <a href="${url}" target="_blank">${url}</a>
+            `;
+            form.reset();
+            document.getElementById('selectedFileName').textContent = '';
+          } else {
+            const error = await response.json();
+            statusDiv.innerHTML = `<p style="color: var(--form-element-invalid-border-color)">Error: ${error.message}</p>`;
+          }
+        } catch (error) {
+          statusDiv.innerHTML = `<p style="color: var(--form-element-invalid-border-color)">Upload failed: ${error.message}</p>`;
+        } finally {
+          submitButton.removeAttribute('aria-busy');
+          submitButton.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

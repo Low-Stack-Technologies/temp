@@ -6,8 +6,8 @@ import (
 )
 
 type Error struct {
-	StatusCode int
-	Message    string
+	StatusCode int    `json:"status_code"`
+	Message    string `json:"message"`
 }
 
 func (e *Error) ToJSON() string {
