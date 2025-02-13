@@ -2,7 +2,7 @@ name: Append Release Note
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   append-note:
