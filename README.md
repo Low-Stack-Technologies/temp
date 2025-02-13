@@ -33,7 +33,7 @@ temp file.txt
 If you are on Windows, you can use the following command:
 
 ```powershell
-temp.exe file.txt
+upload-temp file.txt
 ```
 
 This will upload the file `file.txt` and print the download link. You can also specify an expiration time:
@@ -43,6 +43,8 @@ temp file.txt --expiration 1h
 ```
 
 This will upload the file `file.txt` and print the download link.
+
+There is also a Windows Explorer Context Menu shortcut available to uploads files with one click.
 
 #### Multiple files
 
@@ -80,7 +82,7 @@ services:
       - HTTP_PORT=8080 # The port to listen on
       - DATABASE_PATH=/data/temp-server-database.db # The path to the database file
       - BASE_URL=https://temp.example.com # The URL of your Temp Server, no trailing slash
-      
+
       - STORAGE_PATH=/data # The path to the storage directory
       - MAX_FILE_SIZE=10G # The maximum file size allowed
       - MIN_FREE_SPACE=1G # The minimum free space required to be left after uploading a file
