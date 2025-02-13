@@ -101,7 +101,7 @@ function upload-temp {
             '    $filePath = [System.IO.Path]::GetFullPath(''%1'');' + `
             '    Write-Host "Uploading $filePath";' + `
             '    $result = & upload-temp $filePath --expiration 24h | Out-String;' + `
-            '    $url = $result | Select-String -Pattern ''https://.*'' | ForEach-Object { $_.Matches[0].Value };' + `
+            '    $url = $result | Select-String -Pattern ''(https?://[^\s]+)'' | ForEach-Object { $_.Matches[0].Value };' + `
             '    if ($url) {' + `
             '        [System.Windows.Forms.Clipboard]::SetText($url);' + `
             '        [System.Windows.Forms.MessageBox]::Show(''Download URL copied to clipboard'', ''Upload complete'', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information);' + `
