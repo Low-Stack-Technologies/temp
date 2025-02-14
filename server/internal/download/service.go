@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
 	"tech.low-stack.temp/server/internal/storage"
 )
 
@@ -36,7 +37,12 @@ func handleDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", databaseFile.Filename))
+	fileName := "file"
+	if databaseFile.Filename != nil {
+		fileName = *databaseFile.Filename
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileStat.Size()))
 	w.WriteHeader(http.StatusOK)
