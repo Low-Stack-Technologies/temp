@@ -20,18 +20,27 @@ func main() {
 	expirationStr := pflag.StringP("expiration", "e", "", "Set expiration time (e.g., 5h)")
 	pflag.Parse()
 
-	expiration, err := time_utils.ParseDuration(*expirationStr)
-	if err != nil && expirationStr != nil {
+	expiration, err := parseExpiration(expirationStr)
+	if err != nil {
 		fmt.Printf("invalid argument \"%s\" for \"-e, --expiration\" flag:\n%s\n", *expirationStr, err.Error())
 		os.Exit(1)
 	}
 
-	if expirationStr == nil {
-		expiration = time.Duration(0)
-	}
-
 	filePaths := pflag.Args()
 	uploadFilesIndividually(filePaths, expiration)
+}
+
+func parseExpiration(expirationStr *string) (time.Duration, error) {
+	if expirationStr == nil || *expirationStr == "" {
+		return time.Duration(0), nil
+	}
+
+	expiration, err := time_utils.ParseDuration(*expirationStr)
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	return expiration, nil
 }
 
 func uploadFilesIndividually(filePaths []string, expiration time.Duration) {
