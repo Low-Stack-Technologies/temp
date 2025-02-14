@@ -12,6 +12,7 @@ import (
 	"tech.low-stack.temp/server/internal/env"
 	"tech.low-stack.temp/server/internal/storage"
 	"tech.low-stack.temp/shared/http_error"
+	"tech.low-stack.temp/shared/time_utils"
 )
 
 type LimitWriter struct {
@@ -74,7 +75,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			expiration, err = time.ParseDuration(string(expirationStr))
+			expiration, err = time_utils.ParseDuration(string(expirationStr))
 			if err != nil {
 				log.Printf("Unable to parse expiration field: %s", err.Error())
 				http_error.Respond(w, http.StatusBadRequest, "Unable to process upload!\nUnable to parse expiration field")

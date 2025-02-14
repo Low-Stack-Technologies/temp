@@ -1,10 +1,12 @@
 package env_utils
 
 import (
-	"github.com/dustin/go-humanize"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/dustin/go-humanize"
+	"tech.low-stack.temp/shared/time_utils"
 )
 
 func GetEnvString(key string) string {
@@ -75,7 +77,7 @@ func GetEnvFilePath(key string, mustExist bool) string {
 
 func GetEnvDuration(key string) time.Duration {
 	strValue := GetEnvString(key)
-	duration, err := time.ParseDuration(strValue)
+	duration, err := time_utils.ParseDuration(strValue)
 	if err != nil {
 		panic("Environment variable " + key + " is not a valid duration")
 	}

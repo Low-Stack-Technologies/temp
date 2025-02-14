@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -9,17 +10,24 @@ import (
 	"tech.low-stack.temp/cli/internal/env"
 	"tech.low-stack.temp/cli/internal/update"
 	"tech.low-stack.temp/cli/internal/upload"
+	"tech.low-stack.temp/shared/time_utils"
 )
 
 func main() {
 	env.LoadVariables()
 	update.CheckVersion()
 
-	expiration := pflag.DurationP("expiration", "e", time.Duration(0), "Set expiration time (e.g., 5h)")
+	expirationStr := pflag.StringP("expiration", "e", "", "Set expiration time (e.g., 5h)")
 	pflag.Parse()
 
+	expiration, err := time_utils.ParseDuration(*expirationStr)
+	if err != nil {
+		fmt.Printf("invalid argument \"%s\" for \"-e, --expiration\" flag:\n%s\n", *expirationStr, err.Error())
+		os.Exit(1)
+	}
+
 	filePaths := pflag.Args()
-	uploadFilesIndividually(filePaths, *expiration)
+	uploadFilesIndividually(filePaths, expiration)
 }
 
 func uploadFilesIndividually(filePaths []string, expiration time.Duration) {
