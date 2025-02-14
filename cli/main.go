@@ -21,9 +21,13 @@ func main() {
 	pflag.Parse()
 
 	expiration, err := time_utils.ParseDuration(*expirationStr)
-	if err != nil {
+	if err != nil && expirationStr != nil {
 		fmt.Printf("invalid argument \"%s\" for \"-e, --expiration\" flag:\n%s\n", *expirationStr, err.Error())
 		os.Exit(1)
+	}
+
+	if expirationStr == nil {
+		expiration = time.Duration(0)
 	}
 
 	filePaths := pflag.Args()
