@@ -66,6 +66,16 @@ export TEMP_SERVICE_URL=https://temp.example.com
 
 Now you can use the Temp CLI as usual.
 
+## Temp Web UI
+
+The Temp Web UI is a web-based interface for uploading and downloading files. It is available on all Temp Servers by default.
+
+### Usage
+
+To access the Temp Web UI, simply visit the URL of your Temp Server. For example, the official Temp Server URL is `https://temp.lowstack.tech`.
+
+![Screenshot of the Temp Web UI](https://raw.githubusercontent.com/low-stack-technologies/temp/main/assets/web-ui.png)
+
 ## Temp Server
 
 By default, the Temp CLI uses the Temp Server to upload and download files. You can also run your own Temp Server.
