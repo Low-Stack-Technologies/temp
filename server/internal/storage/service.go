@@ -67,7 +67,9 @@ func GetFile(id string, ctx context.Context) (io.ReadCloser, *db.File, error) {
 func DeleteFile(id string, ctx context.Context) error {
 	qtx := db.NewQueries()
 
-	if err := os.Remove(GetStoragePath(id)); err != nil {
+	// Attempt to delete file from storage
+	err := os.Remove(GetStoragePath(id))
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
