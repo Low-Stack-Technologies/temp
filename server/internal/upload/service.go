@@ -1,6 +1,7 @@
 package upload
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"tech.low-stack.temp/server/internal/db"
 	"tech.low-stack.temp/server/internal/env"
 	"tech.low-stack.temp/server/internal/storage"
 	"tech.low-stack.temp/shared/http_error"
@@ -63,6 +65,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Unable to get form part:\n%s", err.Error())
 			http_error.Respond(w, http.StatusBadRequest, "Unable to process upload!\nWas not able to get form part")
+			failAndDeleteFile(databaseFile, r.Context())
 			return
 		}
 
@@ -72,6 +75,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("Unable to read expiration field: %s", err.Error())
 				http_error.Respond(w, http.StatusBadRequest, "Unable to process upload!\nUnable to read expiration field")
+				failAndDeleteFile(databaseFile, r.Context())
 				return
 			}
 
@@ -79,6 +83,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("Unable to parse expiration field: %s", err.Error())
 				http_error.Respond(w, http.StatusBadRequest, "Unable to process upload!\nUnable to parse expiration field")
+				failAndDeleteFile(databaseFile, r.Context())
 				return
 			}
 
@@ -92,6 +97,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 			if filename == "" {
 				log.Printf("No filename provided")
 				http_error.Respond(w, http.StatusBadRequest, "No filename provided for file!")
+				failAndDeleteFile(databaseFile, r.Context())
 				return
 			}
 
@@ -106,21 +112,18 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 			limitWriter := &LimitWriter{w: file, limit: writeLimit}
 			written, err = io.Copy(limitWriter, part)
 			if err != nil {
-				// Delete file if it was created
-				if file != nil {
-					storage.DeleteFile(databaseFile.ID, r.Context())
-				}
-
 				// Handle file size error
 				if strings.Contains(err.Error(), "file size exceeds limit") {
 					log.Printf("File too large, exceeds %s", humanize.Bytes(writeLimit))
 					http_error.Respond(w, http.StatusRequestEntityTooLarge, fmt.Sprintf("File too large! Exceeds %s", humanize.Bytes(writeLimit)))
+					failAndDeleteFile(databaseFile, r.Context())
 					return
 				}
 
 				// Handle other errors
 				log.Printf("Unable to write to upload: %s", err.Error())
 				http_error.Respond(w, http.StatusInternalServerError, "Unable to write to storage! Unknown error")
+				failAndDeleteFile(databaseFile, r.Context())
 				return
 			}
 		}
@@ -130,6 +133,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	if expiration < env.MinExpiration || expiration > env.MaxExpiration {
 		log.Printf("Expiration out of bounds: %s", expiration.String())
 		http_error.Respond(w, http.StatusBadRequest, fmt.Sprintf("Expiration out of bounds! Must be between %s and %s", env.MinExpiration.String(), env.MaxExpiration.String()))
+		failAndDeleteFile(databaseFile, r.Context())
 		return
 	}
 
@@ -138,6 +142,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Unable to update file: %s", err.Error())
 		http_error.Respond(w, http.StatusInternalServerError, "Unable to update file in database!")
+		failAndDeleteFile(databaseFile, r.Context())
 		return
 	}
 
@@ -145,4 +150,10 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(databaseFile.GetDownloadURL()))
 	log.Printf("Uploaded %s (%s)\t%s", *databaseFile.Filename, databaseFile.ID, humanize.Bytes(uint64(written)))
+}
+
+func failAndDeleteFile(databaseFile *db.File, ctx context.Context) {
+	if databaseFile != nil {
+		storage.DeleteFile(databaseFile.ID, ctx)
+	}
 }
