@@ -61,7 +61,9 @@ This will upload both `file1.txt` and `file2.txt` and print the download links.
 If you want to use your own Temp Server, you can set the `TEMP_SERVICE_URL` environment variable to the URL of your Temp Server. For example:
 
 ```bash
-export TEMP_SERVICE_URL=https://temp.example.com
+export TEMP_SERVICE_URL=https://temp.example.com # add to ~/.bashrc or ~/.zshrc for permanent use
+# or
+TEMP_SERVICE_URL=https://temp.example.com temp file.txt # this will only use custom Temp Server once
 ```
 
 Now you can use the Temp CLI as usual.
@@ -122,3 +124,7 @@ docker run -d \
   -v ./temp-server-data:/data \
   ghcr.io/low-stack-technologies/temp:latest
 ```
+
+### Reverse Proxy
+
+You can use a reverse proxy like Nginx to serve the Temp Web UI and Temp Server, but be aware that not all reverse proxies support large file uploads. You may need to configure the reverse proxy to handle large file uploads. For example, Cloudflare does not support large file uploads.
