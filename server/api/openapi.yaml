@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: File Upload API
+  description: Dual-protocol file upload service with HTTP and TCP support
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/upload:
+    post:
+      summary: Upload one or more files
+      description: Upload files with a specified time-to-live (TTL). Returns download URLs for each file.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - ttl_seconds
+              properties:
+                file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: One or more files to upload (max 10 files)
+                ttl_seconds:
+                  type: integer
+                  minimum: 60
+                  maximum: 2592000
+                  description: Time-to-live in seconds (60 seconds to 30 days)
+      responses:
+        '200':
+          description: Files uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          description: Bad request (invalid TTL, too many files, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/download/{id}:
+    get:
+      summary: Download a file by ID
+      description: Download a previously uploaded file. Returns 404 if file not found or expired.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: File ID returned from upload
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: Attachment with original filename
+            Content-Type:
+              schema:
+                type: string
+              description: Original MIME type of the file
+        '404':
+          description: File not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/public-key:
+    get:
+      summary: Get RSA public key
+      description: Returns the server's RSA public key in PEM format for TCP encryption
+      responses:
+        '200':
+          description: Public key in PEM format
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  -----BEGIN RSA PUBLIC KEY-----
+                  MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
+                  -----END RSA PUBLIC KEY-----
+
+  /api/files:
+    get:
+      summary: List uploaded files
+      description: Returns a paginated list of uploaded files
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+          description: Maximum number of files to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Number of files to skip
+      responses:
+        '200':
+          description: List of files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FileMetadata'
+                  total:
+                    type: integer
+                    description: Total number of files
+
+  /api/files/{id}:
+    get:
+      summary: Get file metadata
+      description: Returns metadata for a specific file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: File ID
+      responses:
+        '200':
+          description: File metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileMetadata'
+        '404':
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    UploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileMetadata'
+        expires_at:
+          type: string
+          format: date-time
+          description: When all uploaded files will expire
+
+    FileMetadata:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique file identifier
+        filename:
+          type: string
+          description: Original filename
+        size:
+          type: integer
+          format: int64
+          description: File size in bytes
+        mime_type:
+          type: string
+          description: MIME type of the file
+        download_url:
+          type: string
+          format: uri
+          description: URL to download the file
+        uploaded_at:
+          type: string
+          format: date-time
+          description: Upload timestamp
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+        checksum:
+          type: string
+          description: SHA-256 checksum of the file
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error message

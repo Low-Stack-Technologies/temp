@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package upload;
+
+option go_package = "github.com/Low-Stack-Technologies/temp/server/proto";
+
+// UploadRequest initiates a file upload session
+message UploadRequest {
+  bytes encrypted_aes_key = 1;  // AES key encrypted with server's RSA public key
+  int32 num_files = 2;           // Number of files to upload
+  int32 ttl_seconds = 3;         // Time-to-live in seconds
+}
+
+// FileMetadata describes a single file in the upload
+message FileMetadata {
+  string filename = 1;
+  int64 size = 2;
+}
+
+// FileChunk contains encrypted file data
+message FileChunk {
+  bytes data = 1;  // AES-encrypted file data
+  bool is_last = 2; // True if this is the last chunk of the current file
+}
+
+// UploadResponse is sent after all files are uploaded
+message UploadResponse {
+  bool success = 1;
+  string error = 2;
+  repeated FileInfo files = 3;
+  int64 expires_at = 4;  // Unix timestamp
+}
+
+// FileInfo contains information about an uploaded file
+message FileInfo {
+  string id = 1;
+  string filename = 2;
+  int64 size = 3;
+  string download_url = 4;
+  string checksum = 5;
+}
+
+// UploadStatus provides progress updates during upload
+message UploadStatus {
+  int32 file_index = 1;
+  int64 bytes_uploaded = 2;
+  int64 total_bytes = 3;
+}
