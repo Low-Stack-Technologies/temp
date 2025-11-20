@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as DocumentPicker from 'expo-document-picker';
 import { Upload, File, X, CheckCircle, AlertCircle, Settings, Clock, Trash2, Copy, ExternalLink, ChevronDown } from 'lucide-react-native';
-import { saveServerUrl, getServerUrl, saveHistoryItem, getHistory, clearHistory, HistoryItem } from './storage';
+import { saveServerUrl, getServerUrl, saveHistoryItem, getHistory, clearHistory, HistoryItem, getServerConfig } from './storage';
 import * as Clipboard from 'expo-clipboard';
 
 interface FileItem {
@@ -28,8 +28,12 @@ interface FileItem {
   downloadUrl?: string;
 }
 
-const TTL_OPTIONS = [
+const ALL_TTL_OPTIONS = [
+  { label: '5 Minutes', value: '300' },
+  { label: '30 Minutes', value: '1800' },
   { label: '1 Hour', value: '3600' },
+  { label: '6 Hours', value: '21600' },
+  { label: '12 Hours', value: '43200' },
   { label: '1 Day', value: '86400' },
   { label: '1 Week', value: '604800' },
   { label: '1 Month', value: '2592000' },
@@ -43,15 +47,47 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showTTLSelector, setShowTTLSelector] = useState(false);
+  
+  const [minTtl, setMinTtl] = useState(60);
+  const [maxTtl, setMaxTtl] = useState(2592000);
 
   useEffect(() => {
     loadSettings();
     loadHistory();
   }, []);
 
+  useEffect(() => {
+    if (serverUrl) {
+      fetchConfig();
+    }
+  }, [serverUrl]);
+
   const loadSettings = async () => {
     const url = await getServerUrl();
     setServerUrl(url);
+  };
+
+  const fetchConfig = async () => {
+    const config = await getServerConfig(serverUrl);
+    if (config) {
+      setMinTtl(config.min_ttl_seconds);
+      setMaxTtl(config.max_ttl_seconds);
+      
+      // Validate current TTL
+      const currentTtl = parseInt(ttl);
+      if (currentTtl < config.min_ttl_seconds || currentTtl > config.max_ttl_seconds) {
+        // Find nearest valid option or default to min
+        const validOption = ALL_TTL_OPTIONS.find(opt => {
+          const val = parseInt(opt.value);
+          return val >= config.min_ttl_seconds && val <= config.max_ttl_seconds;
+        });
+        if (validOption) {
+          setTtl(validOption.value);
+        } else {
+          setTtl(config.min_ttl_seconds.toString());
+        }
+      }
+    }
   };
 
   const loadHistory = async () => {
@@ -215,9 +251,14 @@ export default function App() {
   };
 
   const getTTLLabel = () => {
-    const option = TTL_OPTIONS.find(opt => opt.value === ttl);
+    const option = ALL_TTL_OPTIONS.find(opt => opt.value === ttl);
     return option ? option.label : 'Custom';
   };
+
+  const filteredTTLOptions = ALL_TTL_OPTIONS.filter(opt => {
+    const val = parseInt(opt.value);
+    return val >= minTtl && val <= maxTtl;
+  });
 
   return (
     <View style={styles.container}>
@@ -395,7 +436,7 @@ export default function App() {
         >
           <BlurView intensity={20} tint="dark" style={styles.selectorModalContent}>
             <Text style={styles.selectorModalTitle}>Select Expiration</Text>
-            {TTL_OPTIONS.map((option) => (
+            {filteredTTLOptions.map((option) => (
               <TouchableOpacity
                 key={option.value}
                 style={[

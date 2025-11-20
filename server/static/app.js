@@ -12,6 +12,25 @@ async function loadConfig() {
         // Update UI with config values
         const uploadLimits = document.getElementById('uploadLimits');
         uploadLimits.textContent = `Upload up to ${serverConfig.max_files_per_upload} files at once • Max ${formatSize(serverConfig.max_upload_size_mb)} per file`;
+
+        // Filter TTL options
+        const ttlSelect = document.getElementById('ttlSelect');
+        const options = Array.from(ttlSelect.options);
+        let hasValidSelection = false;
+
+        options.forEach(option => {
+            const value = parseInt(option.value);
+            if (value < serverConfig.min_ttl_seconds || value > serverConfig.max_ttl_seconds) {
+                option.remove();
+            } else {
+                if (option.selected) hasValidSelection = true;
+            }
+        });
+
+        // If current selection is invalid (removed), select the first valid option
+        if (!hasValidSelection && ttlSelect.options.length > 0) {
+            ttlSelect.selectedIndex = 0;
+        }
     } catch (error) {
         console.error('Failed to load config:', error);
         // Fallback to defaults

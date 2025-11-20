@@ -13,6 +13,13 @@ export interface HistoryItem {
   uploadedAt: number;
 }
 
+export interface ServerConfig {
+  max_upload_size_mb: number;
+  max_files_per_upload: number;
+  min_ttl_seconds: number;
+  max_ttl_seconds: number;
+}
+
 export const saveServerUrl = async (url: string) => {
   try {
     await AsyncStorage.setItem(KEYS.SERVER_URL, url);
@@ -28,6 +35,17 @@ export const getServerUrl = async (): Promise<string> => {
   } catch (e) {
     console.error('Failed to get server URL', e);
     return 'https://temp.low-stack.tech';
+  }
+};
+
+export const getServerConfig = async (serverUrl: string): Promise<ServerConfig | null> => {
+  try {
+    const response = await fetch(`${serverUrl}/api/config`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (e) {
+    console.error('Failed to get server config', e);
+    return null;
   }
 };
 
