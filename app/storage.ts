@@ -11,6 +11,7 @@ export interface HistoryItem {
   size: number;
   downloadUrl: string;
   uploadedAt: number;
+  expiresAt: number;
 }
 
 export interface ServerConfig {

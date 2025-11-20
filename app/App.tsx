@@ -65,10 +65,13 @@ export default function App() {
   
   const [minTtl, setMinTtl] = useState(60);
   const [maxTtl, setMaxTtl] = useState(2592000);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     loadSettings();
     loadHistory();
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -220,12 +223,15 @@ export default function App() {
             );
             
             for (const file of response.files) {
+              const uploadedAt = Date.now();
+              const ttlSeconds = parseInt(ttl);
               const historyItem: HistoryItem = {
                 id: file.id,
                 filename: file.filename,
                 size: file.size,
                 downloadUrl: file.download_url,
-                uploadedAt: Date.now(),
+                uploadedAt: uploadedAt,
+                expiresAt: uploadedAt + (ttlSeconds * 1000),
               };
               await saveHistoryItem(historyItem);
             }
@@ -267,6 +273,20 @@ export default function App() {
     const val = parseInt(opt.value);
     return val >= minTtl && val <= maxTtl;
   });
+
+  const formatTimeRemaining = (expiresAt: number) => {
+    const diff = expiresAt - now;
+    if (diff <= 0) return 'Expired';
+    
+    const seconds = Math.floor((diff / 1000) % 60);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m ${seconds}s`;
+  };
 
   return (
     <View style={styles.container}>
@@ -396,24 +416,45 @@ export default function App() {
               <Clock color={COLORS.textMuted} size={18} />
               <Text style={styles.sectionTitle}>History</Text>
             </View>
-            {history.map((item) => (
-              <BlurView intensity={20} tint="dark" key={item.id} style={styles.historyItem}>
-                <View style={styles.fileInfo}>
-                  <Text style={styles.fileName} numberOfLines={1}>{item.filename}</Text>
-                  <Text style={styles.fileSize}>
-                    {(item.size / 1024).toFixed(1)} KB • {new Date(item.uploadedAt).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View style={styles.historyActions}>
-                  <TouchableOpacity onPress={() => copyToClipboard(item.downloadUrl)} style={styles.actionButton}>
-                    <Copy color={COLORS.text} size={18} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => Linking.openURL(item.downloadUrl)} style={styles.actionButton}>
-                    <ExternalLink color={COLORS.text} size={18} />
-                  </TouchableOpacity>
-                </View>
-              </BlurView>
-            ))}
+            {history.map((item) => {
+              const isExpired = now > item.expiresAt;
+              return (
+                <BlurView 
+                  intensity={20} 
+                  tint="dark" 
+                  key={item.id} 
+                  style={[
+                    styles.historyItem,
+                    isExpired && styles.expiredItem
+                  ]}
+                >
+                  <View style={styles.fileInfo}>
+                    <Text style={[styles.fileName, isExpired && styles.expiredText]} numberOfLines={1}>
+                      {item.filename}
+                    </Text>
+                    <Text style={styles.fileSize}>
+                      {(item.size / 1024).toFixed(1)} KB • {isExpired ? 'Expired' : formatTimeRemaining(item.expiresAt)}
+                    </Text>
+                  </View>
+                  <View style={styles.historyActions}>
+                    <TouchableOpacity 
+                      onPress={() => copyToClipboard(item.downloadUrl)} 
+                      style={[styles.actionButton, isExpired && styles.disabledAction]}
+                      disabled={isExpired}
+                    >
+                      <Copy color={isExpired ? COLORS.textMuted : COLORS.text} size={18} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={() => Linking.openURL(item.downloadUrl)} 
+                      style={[styles.actionButton, isExpired && styles.disabledAction]}
+                      disabled={isExpired}
+                    >
+                      <ExternalLink color={isExpired ? COLORS.textMuted : COLORS.text} size={18} />
+                    </TouchableOpacity>
+                  </View>
+                </BlurView>
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -659,6 +700,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.glassBorder,
   },
+  expiredItem: {
+    opacity: 0.5,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  expiredText: {
+    color: COLORS.textMuted,
+    textDecorationLine: 'line-through',
+  },
   fileInfo: {
     flex: 1,
     marginRight: 10,
@@ -686,6 +735,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: COLORS.glassBorder,
+  },
+  disabledAction: {
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
   },
   progressBar: {
     height: 4,
