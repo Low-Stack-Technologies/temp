@@ -70,6 +70,10 @@ func main() {
 	publicKeyHandler := handlers.NewPublicKeyHandler(keyPair.Public)
 	mux.Handle("/api/public-key", publicKeyHandler)
 	
+	// Config endpoint
+	configHandler := handlers.NewConfigHandler(cfg)
+	mux.Handle("/api/config", configHandler)
+	
 	// File listing endpoint
 	listHandler := handlers.NewFileListHandler(cfg, repo)
 	mux.Handle("/api/files", listHandler)
@@ -88,6 +92,19 @@ func main() {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
+	})
+	
+	// Serve static files
+	fs := http.FileServer(http.Dir("./static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	
+	// Serve index.html at root
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.ServeFile(w, r, "./static/index.html")
+		} else {
+			http.NotFound(w, r)
+		}
 	})
 	
 	log.Println("HTTP router configured")

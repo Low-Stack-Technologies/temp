@@ -1,0 +1,41 @@
+# Docker ignore file for file upload server
+
+# Git
+.git
+.gitignore
+
+# Environment files (use docker-compose or -e flags instead)
+.env
+.env.*
+
+# Storage and data (should be mounted as volumes)
+storage/
+*.db
+
+# Build artifacts
+file-upload-server
+tmp/
+
+# Development files
+.air.toml
+*.log
+
+# Documentation
+README.md
+docs/
+
+# Examples
+examples/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*_test.go

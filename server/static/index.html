@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Server</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="40" height="40" rx="8" fill="url(#gradient)"/>
+                    <path d="M20 10L20 30M20 10L14 16M20 10L26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 28H28" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" style="stop-color:#667eea"/>
+                            <stop offset="100%" style="stop-color:#764ba2"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>File Upload Server</h1>
+            </div>
+            <p class="subtitle">Secure file sharing with automatic expiration</p>
+        </header>
+
+        <main class="main">
+            <div class="upload-section">
+                <div class="upload-zone" id="uploadZone">
+                    <svg class="upload-icon" width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/>
+                        <path d="M32 20V44M32 20L24 28M32 20L40 28" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h2>Drop files here or click to browse</h2>
+                    <p id="uploadLimits">Loading...</p>
+                    <input type="file" id="fileInput" multiple hidden>
+                </div>
+
+                <div class="ttl-selector">
+                    <label for="ttlSelect">File expiration:</label>
+                    <select id="ttlSelect">
+                        <option value="300">5 minutes</option>
+                        <option value="1800">30 minutes</option>
+                        <option value="3600" selected>1 hour</option>
+                        <option value="21600">6 hours</option>
+                        <option value="86400">24 hours</option>
+                        <option value="604800">7 days</option>
+                        <option value="2592000">30 days</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="files-section" id="filesSection" style="display: none;">
+                <h3>Upload Queue</h3>
+                <div id="filesList" class="files-list"></div>
+                <div class="upload-actions">
+                    <button id="uploadBtn" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 4V16M10 4L6 8M10 4L14 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Upload Files
+                    </button>
+                    <button id="clearBtn" class="btn btn-secondary">Clear All</button>
+                </div>
+            </div>
+
+            <div class="uploaded-section" id="uploadedSection" style="display: none;">
+                <h3>Uploaded Files</h3>
+                <div id="uploadedList" class="uploaded-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
