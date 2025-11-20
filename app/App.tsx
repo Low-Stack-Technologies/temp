@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Modal,
   Linking,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -38,6 +40,19 @@ const ALL_TTL_OPTIONS = [
   { label: '1 Week', value: '604800' },
   { label: '1 Month', value: '2592000' },
 ];
+
+// Design Constants
+const COLORS = {
+  bg: '#050505',
+  primary: '#B026FF',
+  secondary: '#00F0FF',
+  text: '#ffffff',
+  textMuted: '#8b9bb4',
+  glassBorder: 'rgba(255, 255, 255, 0.1)',
+  glassBg: 'rgba(255, 255, 255, 0.03)',
+  success: '#00ff9d',
+  error: '#ff0055',
+};
 
 export default function App() {
   const [serverUrl, setServerUrl] = useState('https://temp.low-stack.tech');
@@ -73,10 +88,8 @@ export default function App() {
       setMinTtl(config.min_ttl_seconds);
       setMaxTtl(config.max_ttl_seconds);
       
-      // Validate current TTL
       const currentTtl = parseInt(ttl);
       if (currentTtl < config.min_ttl_seconds || currentTtl > config.max_ttl_seconds) {
-        // Find nearest valid option or default to min
         const validOption = ALL_TTL_OPTIONS.find(opt => {
           const val = parseInt(opt.value);
           return val >= config.min_ttl_seconds && val <= config.max_ttl_seconds;
@@ -159,12 +172,11 @@ export default function App() {
 
     setIsUploading(true);
 
-    // Create FormData
     const formData = new FormData();
     formData.append('ttl_seconds', ttl);
 
     files.forEach((file) => {
-      // @ts-ignore: React Native FormData expects object with uri, name, type
+      // @ts-ignore
       formData.append('file', {
         uri: file.uri,
         name: file.name,
@@ -173,16 +185,13 @@ export default function App() {
     });
 
     try {
-      // Update all files to uploading state
       setFiles((prev) =>
         prev.map((f) => ({ ...f, status: 'uploading', progress: 0 }))
       );
 
       const xhr = new XMLHttpRequest();
-      
       xhr.open('POST', `${serverUrl}/api/upload`);
       
-      // Track progress
       if (xhr.upload) {
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
@@ -210,7 +219,6 @@ export default function App() {
               })
             );
             
-            // Save to history
             for (const file of response.files) {
               const historyItem: HistoryItem = {
                 id: file.id,
@@ -262,29 +270,40 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={['#1a1a1a', '#2d2d2d', '#1a1a1a']}
+        colors={['#050505', '#0a0a0a', '#12051f']}
         style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
       
+      {/* Background Accents */}
+      <View style={styles.bgAccent1} />
+      <View style={styles.bgAccent2} />
+      <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Temp Upload</Text>
+        <View>
+          <Text style={styles.title}>Temp Upload</Text>
+          <Text style={styles.subtitle}>Secure file sharing</Text>
+        </View>
         <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsButton}>
-          <Settings color="#fff" size={24} />
+          <Settings color={COLORS.text} size={24} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.card}>
-          <Text style={styles.label}>File Expiration</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <BlurView intensity={20} tint="dark" style={styles.card}>
+          <Text style={styles.label}>FILE EXPIRATION</Text>
           <TouchableOpacity 
             style={styles.selectorButton}
             onPress={() => setShowTTLSelector(true)}
           >
             <Text style={styles.selectorText}>{getTTLLabel()}</Text>
-            <ChevronDown color="#aaa" size={20} />
+            <ChevronDown color={COLORS.textMuted} size={20} />
           </TouchableOpacity>
-        </View>
+        </BlurView>
 
         <TouchableOpacity
           style={styles.pickButton}
@@ -292,7 +311,7 @@ export default function App() {
           disabled={isUploading}
         >
           <LinearGradient
-            colors={['#4c669f', '#3b5998', '#192f6a']}
+            colors={[COLORS.primary, COLORS.secondary]}
             style={styles.gradientButton}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -306,7 +325,10 @@ export default function App() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Current Uploads</Text>
             {files.map((file, index) => (
-              <BlurView intensity={20} tint="dark" key={index} style={styles.fileItem}>
+              <BlurView intensity={30} tint="dark" key={index} style={styles.fileItem}>
+                <View style={styles.fileIcon}>
+                  <File color={COLORS.secondary} size={24} />
+                </View>
                 <View style={styles.fileInfo}>
                   <Text style={styles.fileName} numberOfLines={1}>
                     {file.name}
@@ -316,7 +338,10 @@ export default function App() {
                   </Text>
                   {file.status === 'uploading' && (
                     <View style={styles.progressBar}>
-                      <View 
+                      <LinearGradient
+                        colors={[COLORS.primary, COLORS.secondary]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
                         style={[
                           styles.progressFill, 
                           { width: `${file.progress * 100}%` }
@@ -328,14 +353,14 @@ export default function App() {
                 <View style={styles.fileActions}>
                   {file.status === 'success' ? (
                     <TouchableOpacity onPress={() => file.downloadUrl && copyToClipboard(file.downloadUrl)}>
-                       <CheckCircle color="#4caf50" size={20} />
+                       <CheckCircle color={COLORS.success} size={20} />
                     </TouchableOpacity>
                   ) : file.status === 'error' ? (
-                    <AlertCircle color="#f44336" size={20} />
+                    <AlertCircle color={COLORS.error} size={20} />
                   ) : (
                     !isUploading && (
                       <TouchableOpacity onPress={() => removeFile(index)}>
-                        <X color="#ff5252" size={20} />
+                        <X color={COLORS.error} size={20} />
                       </TouchableOpacity>
                     )
                   )}
@@ -351,10 +376,15 @@ export default function App() {
               {isUploading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <>
+                <LinearGradient
+                  colors={[COLORS.success, '#00cc7d']}
+                  style={styles.uploadGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
                   <Upload color="white" size={24} style={{ marginRight: 8 }} />
                   <Text style={styles.uploadButtonText}>Upload {files.length} Files</Text>
-                </>
+                </LinearGradient>
               )}
             </TouchableOpacity>
           </View>
@@ -363,11 +393,11 @@ export default function App() {
         {history.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Clock color="#aaa" size={20} />
+              <Clock color={COLORS.textMuted} size={18} />
               <Text style={styles.sectionTitle}>History</Text>
             </View>
             {history.map((item) => (
-              <BlurView intensity={10} tint="dark" key={item.id} style={styles.historyItem}>
+              <BlurView intensity={20} tint="dark" key={item.id} style={styles.historyItem}>
                 <View style={styles.fileInfo}>
                   <Text style={styles.fileName} numberOfLines={1}>{item.filename}</Text>
                   <Text style={styles.fileSize}>
@@ -376,10 +406,10 @@ export default function App() {
                 </View>
                 <View style={styles.historyActions}>
                   <TouchableOpacity onPress={() => copyToClipboard(item.downloadUrl)} style={styles.actionButton}>
-                    <Copy color="#fff" size={18} />
+                    <Copy color={COLORS.text} size={18} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => Linking.openURL(item.downloadUrl)} style={styles.actionButton}>
-                    <ExternalLink color="#fff" size={18} />
+                    <ExternalLink color={COLORS.text} size={18} />
                   </TouchableOpacity>
                 </View>
               </BlurView>
@@ -395,27 +425,27 @@ export default function App() {
         transparent={true}
         onRequestClose={() => setShowSettings(false)}
       >
-        <BlurView intensity={50} tint="dark" style={styles.modalContainer}>
+        <BlurView intensity={90} tint="dark" style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Settings</Text>
-              <TouchableOpacity onPress={() => setShowSettings(false)}>
-                <X color="#fff" size={24} />
+              <TouchableOpacity onPress={() => setShowSettings(false)} style={styles.closeButton}>
+                <X color={COLORS.text} size={24} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.label}>Server URL</Text>
+            <Text style={styles.label}>SERVER URL</Text>
             <TextInput
               style={styles.input}
               value={serverUrl}
               onChangeText={handleServerUrlChange}
               placeholder="https://temp.low-stack.tech"
-              placeholderTextColor="#666"
+              placeholderTextColor={COLORS.textMuted}
               autoCapitalize="none"
             />
 
             <TouchableOpacity style={styles.clearButton} onPress={handleClearHistory}>
-              <Trash2 color="#ff5252" size={20} style={{ marginRight: 8 }} />
+              <Trash2 color={COLORS.error} size={20} style={{ marginRight: 8 }} />
               <Text style={styles.clearButtonText}>Clear History</Text>
             </TouchableOpacity>
           </View>
@@ -434,7 +464,7 @@ export default function App() {
           activeOpacity={1} 
           onPress={() => setShowTTLSelector(false)}
         >
-          <BlurView intensity={20} tint="dark" style={styles.selectorModalContent}>
+          <BlurView intensity={50} tint="dark" style={styles.selectorModalContent}>
             <Text style={styles.selectorModalTitle}>Select Expiration</Text>
             {filteredTTLOptions.map((option) => (
               <TouchableOpacity
@@ -454,7 +484,7 @@ export default function App() {
                 ]}>
                   {option.label}
                 </Text>
-                {ttl === option.value && <CheckCircle color="#4c669f" size={20} />}
+                {ttl === option.value && <CheckCircle color={COLORS.secondary} size={20} />}
               </TouchableOpacity>
             ))}
           </BlurView>
@@ -467,266 +497,318 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: COLORS.bg,
+  },
+  bgAccent1: {
+    position: 'absolute',
+    top: -100,
+    left: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: COLORS.primary,
+    opacity: 0.2,
+  },
+  bgAccent2: {
+    position: 'absolute',
+    bottom: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: COLORS.secondary,
+    opacity: 0.2,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.text,
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    marginTop: 4,
+    letterSpacing: 0.5,
   },
   settingsButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
+    padding: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
   },
   scrollContent: {
-    padding: 20,
+    padding: 24,
     paddingTop: 0,
     paddingBottom: 40,
   },
   section: {
-    marginTop: 24,
+    marginTop: 32,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginLeft: 8,
+    fontWeight: '700',
+    color: COLORS.text,
+    letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: COLORS.glassBorder,
+    overflow: 'hidden',
   },
   label: {
-    color: '#ccc',
-    fontSize: 14,
-    marginBottom: 8,
-    fontWeight: '600',
+    color: COLORS.textMuted,
+    fontSize: 12,
+    marginBottom: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   input: {
     backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 8,
-    padding: 12,
-    color: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    color: COLORS.text,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: COLORS.glassBorder,
   },
   selectorButton: {
     backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: COLORS.glassBorder,
   },
   selectorText: {
-    color: '#fff',
+    color: COLORS.text,
     fontSize: 16,
+    fontWeight: '500',
   },
   pickButton: {
-    marginBottom: 10,
-    borderRadius: 12,
+    marginBottom: 12,
+    borderRadius: 16,
     overflow: 'hidden',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    elevation: 8,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: 12,
   },
   gradientButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 18,
   },
   buttonText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginLeft: 10,
-  },
-  fileList: {
-    marginBottom: 20,
+    letterSpacing: 0.5,
   },
   fileItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: COLORS.glassBorder,
+  },
+  fileIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 240, 255, 0.2)',
   },
   historyItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: 16,
+    marginBottom: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderColor: COLORS.glassBorder,
   },
   fileInfo: {
     flex: 1,
     marginRight: 10,
   },
   fileName: {
-    color: '#fff',
+    color: COLORS.text,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginBottom: 4,
   },
   fileSize: {
-    color: '#aaa',
-    fontSize: 12,
-    marginTop: 2,
+    color: COLORS.textMuted,
+    fontSize: 13,
   },
   fileActions: {
     padding: 4,
   },
   historyActions: {
     flexDirection: 'row',
+    gap: 8,
   },
   actionButton: {
     padding: 8,
-    marginLeft: 4,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
   },
   progressBar: {
     height: 4,
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 2,
-    marginTop: 6,
+    marginTop: 8,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4c669f',
   },
   uploadButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
+    marginTop: 12,
+    shadowColor: COLORS.success,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+  },
+  uploadGradient: {
     flexDirection: 'row',
-    backgroundColor: '#4caf50',
-    padding: 16,
-    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
-    marginTop: 10,
+    padding: 18,
   },
   disabledButton: {
     opacity: 0.7,
   },
   uploadButtonText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
   },
   modalContent: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: 'rgba(5,5,5,0.95)',
+    borderRadius: 24,
+    padding: 32,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    borderColor: COLORS.glassBorder,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 28,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  closeButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
   },
   clearButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#ff5252',
-    marginTop: 24,
+    borderColor: 'rgba(255, 0, 85, 0.3)',
+    backgroundColor: 'rgba(255, 0, 85, 0.05)',
+    marginTop: 32,
   },
   clearButtonText: {
-    color: '#ff5252',
+    color: COLORS.error,
     fontSize: 16,
     fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
   },
   selectorModalContent: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: 'rgba(5,5,5,0.95)',
+    borderRadius: 24,
+    padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: COLORS.glassBorder,
+    overflow: 'hidden',
   },
   selectorModalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 20,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   optionButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
     marginBottom: 8,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   selectedOption: {
-    backgroundColor: 'rgba(76, 102, 159, 0.2)',
-    borderColor: '#4c669f',
-    borderWidth: 1,
+    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+    borderColor: COLORS.secondary,
   },
   optionText: {
     fontSize: 16,
-    color: '#ccc',
+    color: COLORS.textMuted,
+    fontWeight: '500',
   },
   selectedOptionText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: COLORS.text,
+    fontWeight: '700',
   },
 });
