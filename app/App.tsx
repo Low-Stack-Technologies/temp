@@ -151,7 +151,8 @@ export default function App() {
           status: 'pending' as const,
           progress: 0,
         }));
-        setFiles((prev) => [...prev, ...newFiles]);
+        // Remove successfully uploaded files and add new ones
+        setFiles((prev) => [...prev.filter(f => f.status !== 'success'), ...newFiles]);
       }
     } catch (err) {
       Alert.alert('Error', 'Failed to pick files');
