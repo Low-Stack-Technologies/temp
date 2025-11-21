@@ -343,7 +343,7 @@ export default function App() {
 
         {files.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Current Uploads</Text>
+            <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Current Uploads</Text>
             {files.map((file, index) => (
               <BlurView intensity={30} tint="dark" key={index} style={styles.fileItem}>
                 <View style={styles.fileIcon}>
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
     gap: 8,
   },
   sectionTitle: {
