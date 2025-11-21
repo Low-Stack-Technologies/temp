@@ -112,10 +112,12 @@ func Upload(cfg *config.Config, filePaths []string) error {
 	if response.Success {
 		fmt.Println("\n✓ Upload successful!")
 		for _, file := range response.Files {
+			// Construct full download URL from path
+			downloadURL := fmt.Sprintf("%s%s", cfg.Server, file.DownloadUrl)
 			fmt.Printf("\nFile: %s\n", file.Filename)
 			fmt.Printf("  ID: %s\n", file.Id)
 			fmt.Printf("  Size: %d bytes\n", file.Size)
-			fmt.Printf("  Download URL: %s\n", file.DownloadUrl)
+			fmt.Printf("  Download URL: %s\n", downloadURL)
 			fmt.Printf("  Checksum: %s\n", file.Checksum)
 		}
 	} else {

@@ -218,7 +218,7 @@ export default function App() {
                   ...f,
                   status: 'success',
                   progress: 1,
-                  downloadUrl: uploadedFile?.download_url,
+                  downloadUrl: uploadedFile ? `${serverUrl}${uploadedFile.download_path}` : undefined,
                 };
               })
             );
@@ -230,7 +230,7 @@ export default function App() {
                 id: file.id,
                 filename: file.filename,
                 size: file.size,
-                downloadUrl: file.download_url,
+                downloadUrl: `${serverUrl}${file.download_path}`,
                 uploadedAt: uploadedAt,
                 expiresAt: uploadedAt + (ttlSeconds * 1000),
               };

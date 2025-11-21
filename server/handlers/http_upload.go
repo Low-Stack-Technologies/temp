@@ -39,14 +39,14 @@ type UploadResponse struct {
 
 // FileMetadata represents file information in responses
 type FileMetadata struct {
-	ID          string    `json:"id"`
-	Filename    string    `json:"filename"`
-	Size        int64     `json:"size"`
-	MimeType    string    `json:"mime_type"`
-	DownloadURL string    `json:"download_url"`
-	UploadedAt  time.Time `json:"uploaded_at"`
-	ExpiresAt   time.Time `json:"expires_at"`
-	Checksum    string    `json:"checksum"`
+	ID           string    `json:"id"`
+	Filename     string    `json:"filename"`
+	Size         int64     `json:"size"`
+	MimeType     string    `json:"mime_type"`
+	DownloadPath string    `json:"download_path"`
+	UploadedAt   time.Time `json:"uploaded_at"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	Checksum     string    `json:"checksum"`
 }
 
 // ServeHTTP handles the HTTP upload request
@@ -154,16 +154,16 @@ func (h *HTTPUploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		
 		// Add to response
-		downloadURL := fmt.Sprintf("%s/api/download/%s", h.cfg.BaseURL, fileID)
+		downloadPath := fmt.Sprintf("/api/download/%s", fileID)
 		uploadedFiles = append(uploadedFiles, FileMetadata{
-			ID:          fileID,
-			Filename:    fileHeader.Filename,
-			Size:        size,
-			MimeType:    mimeType,
-			DownloadURL: downloadURL,
-			UploadedAt:  uploadedAt,
-			ExpiresAt:   expiresAt,
-			Checksum:    checksum,
+			ID:           fileID,
+			Filename:     fileHeader.Filename,
+			Size:         size,
+			MimeType:     mimeType,
+			DownloadPath: downloadPath,
+			UploadedAt:   uploadedAt,
+			ExpiresAt:    expiresAt,
+			Checksum:     checksum,
 		})
 	}
 	

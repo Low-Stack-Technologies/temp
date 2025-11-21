@@ -135,12 +135,12 @@ func (h *TCPUploadHandler) HandleConnection(conn net.Conn) error {
 		}
 		
 		// Add to response
-		downloadURL := fmt.Sprintf("%s/api/download/%s", h.cfg.BaseURL, fileID)
+		downloadPath := fmt.Sprintf("/api/download/%s", fileID)
 		uploadedFiles = append(uploadedFiles, &pb.FileInfo{
 			Id:          fileID,
 			Filename:    metadata.Filename,
 			Size:        size,
-			DownloadUrl: downloadURL,
+			DownloadUrl: downloadPath,
 			Checksum:    checksum,
 		})
 	}

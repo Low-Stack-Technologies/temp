@@ -66,14 +66,14 @@ func (h *FileListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	files := make([]FileMetadata, 0, len(records))
 	for _, record := range records {
 		files = append(files, FileMetadata{
-			ID:          record.ID,
-			Filename:    record.Filename,
-			Size:        record.Size,
-			MimeType:    record.MimeType,
-			DownloadURL: h.cfg.BaseURL + "/api/download/" + record.ID,
-			UploadedAt:  record.UploadedAt,
-			ExpiresAt:   record.ExpiresAt,
-			Checksum:    record.Checksum,
+			ID:           record.ID,
+			Filename:     record.Filename,
+			Size:         record.Size,
+			MimeType:     record.MimeType,
+			DownloadPath: "/api/download/" + record.ID,
+			UploadedAt:   record.UploadedAt,
+			ExpiresAt:    record.ExpiresAt,
+			Checksum:     record.Checksum,
 		})
 	}
 	
@@ -128,14 +128,14 @@ func (h *FileMetadataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	
 	// Convert to response format
 	metadata := FileMetadata{
-		ID:          record.ID,
-		Filename:    record.Filename,
-		Size:        record.Size,
-		MimeType:    record.MimeType,
-		DownloadURL: h.cfg.BaseURL + "/api/download/" + record.ID,
-		UploadedAt:  record.UploadedAt,
-		ExpiresAt:   record.ExpiresAt,
-		Checksum:    record.Checksum,
+		ID:           record.ID,
+		Filename:     record.Filename,
+		Size:         record.Size,
+		MimeType:     record.MimeType,
+		DownloadPath: "/api/download/" + record.ID,
+		UploadedAt:   record.UploadedAt,
+		ExpiresAt:    record.ExpiresAt,
+		Checksum:     record.Checksum,
 	}
 	
 	w.Header().Set("Content-Type", "application/json")

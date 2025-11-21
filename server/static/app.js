@@ -286,15 +286,24 @@ async function uploadSingleFile(fileObj, ttlSeconds) {
 
         const data = await response.json();
         
+        console.log('Upload response:', data); // Debug log
+        
         if (data.success && data.files && data.files.length > 0) {
             fileObj.status = 'success';
             fileObj.progress = 100;
             renderFilesList();
             
+            // Construct full download URL from path
+            const downloadPath = data.files[0].download_path;
+            console.log('Download path:', downloadPath); // Debug log
+            const downloadUrl = downloadPath ? `${window.location.origin}${downloadPath}` : undefined;
+            console.log('Constructed URL:', downloadUrl); // Debug log
+            
             return {
                 success: true,
                 data: {
                     ...data.files[0],
+                    download_url: downloadUrl,
                     expires_at: data.expires_at
                 }
             };
