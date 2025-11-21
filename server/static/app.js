@@ -2,6 +2,55 @@
 let selectedFiles = [];
 let uploadedFiles = [];
 let serverConfig = null;
+let history = [];
+let now = Date.now();
+
+// LocalStorage keys
+const STORAGE_KEYS = {
+    UPLOAD_HISTORY: 'UPLOAD_HISTORY'
+};
+
+// History management functions
+function saveHistoryItem(item) {
+    try {
+        const history = getHistory();
+        const newHistory = [item, ...history];
+        localStorage.setItem(STORAGE_KEYS.UPLOAD_HISTORY, JSON.stringify(newHistory));
+    } catch (e) {
+        console.error('Failed to save history item', e);
+    }
+}
+
+function getHistory() {
+    try {
+        const json = localStorage.getItem(STORAGE_KEYS.UPLOAD_HISTORY);
+        return json ? JSON.parse(json) : [];
+    } catch (e) {
+        console.error('Failed to get history', e);
+        return [];
+    }
+}
+
+function clearHistoryStorage() {
+    try {
+        localStorage.removeItem(STORAGE_KEYS.UPLOAD_HISTORY);
+        history = [];
+    } catch (e) {
+        console.error('Failed to clear history', e);
+    }
+}
+
+function loadHistory() {
+    history = getHistory();
+    renderHistory();
+}
+
+// Update current time every second for countdown timers
+setInterval(() => {
+    now = Date.now();
+    renderHistory();
+}, 1000);
+
 
 // Load server configuration
 async function loadConfig() {
@@ -239,13 +288,28 @@ async function uploadFiles() {
     try {
         const results = await Promise.all(uploadPromises);
         
-        // Add successful uploads to uploaded list
+        // Add successful uploads to uploaded list and history
         results.forEach((result, index) => {
             if (result.success) {
                 uploadedFiles.unshift(result.data);
+                
+                // Save to history
+                const uploadedAt = Date.now();
+                const expiresAt = new Date(result.data.expires_at).getTime();
+                const historyItem = {
+                    id: result.data.id,
+                    filename: result.data.filename,
+                    size: result.data.size,
+                    download_url: result.data.download_url,
+                    uploadedAt: uploadedAt,
+                    expiresAt: expiresAt
+                };
+                saveHistoryItem(historyItem);
             }
         });
         
+        // Reload history to update display
+        loadHistory();
         renderUploadedFiles();
         
         // Clear successful uploads from queue
@@ -402,3 +466,78 @@ function getTimeRemaining(date) {
     if (minutes > 0) return `in ${minutes} minute${minutes > 1 ? 's' : ''}`;
     return 'soon';
 }
+
+// Format time remaining for history countdown
+function formatTimeRemaining(expiresAt) {
+    const diff = expiresAt - now;
+    if (diff <= 0) return 'Expired';
+    
+    const seconds = Math.floor((diff / 1000) % 60);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m ${seconds}s`;
+}
+
+// Render history section
+function renderHistory() {
+    const historySection = document.getElementById('historySection');
+    const historyList = document.getElementById('historyList');
+    
+    if (!historySection || !historyList) return;
+    
+    if (history.length === 0) {
+        historySection.style.display = 'none';
+        return;
+    }
+
+    historySection.style.display = 'block';
+    historyList.innerHTML = '';
+
+    history.forEach(item => {
+        const isExpired = now > item.expiresAt;
+        const itemDiv = document.createElement('div');
+        itemDiv.className = `history-item${isExpired ? ' expired' : ''}`;
+        
+        itemDiv.innerHTML = `
+            <div class="history-header">
+                <div class="history-info">
+                    <div class="history-name${isExpired ? ' expired-text' : ''}">${item.filename}</div>
+                    <div class="history-meta">
+                        ${formatFileSize(item.size)} • ${isExpired ? 'Expired' : formatTimeRemaining(item.expiresAt)}
+                    </div>
+                </div>
+                <div class="history-actions">
+                    <button class="icon-btn" onclick="copyToClipboard('${item.download_url}')" ${isExpired ? 'disabled' : ''} title="Copy link">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M5 15H4C2.89543 15 2 14.1046 2 13V4C2 2.89543 2.89543 2 4 2H13C14.1046 2 15 2.89543 15 4V5" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" onclick="window.open('${item.download_url}', '_blank')" ${isExpired ? 'disabled' : ''} title="Open link">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        historyList.appendChild(itemDiv);
+    });
+}
+
+// Clear history with confirmation
+function handleClearHistory() {
+    if (confirm('Are you sure you want to clear your upload history?')) {
+        clearHistoryStorage();
+        renderHistory();
+    }
+}
+
+// Initialize on page load
+loadHistory();
+

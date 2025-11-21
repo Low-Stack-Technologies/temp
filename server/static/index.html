@@ -71,6 +71,26 @@
                 <h3>Uploaded Files</h3>
                 <div id="uploadedList" class="uploaded-list"></div>
             </div>
+
+            <div class="history-section" id="historySection" style="display: none;">
+                <div class="history-header-bar">
+                    <div class="history-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <h3>History</h3>
+                    </div>
+                    <button class="btn-clear-history" onclick="handleClearHistory()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Clear History
+                    </button>
+                </div>
+                <div id="historyList" class="history-list"></div>
+            </div>
         </main>
     </div>
 
