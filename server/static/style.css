@@ -63,15 +63,7 @@ body::before {
     animation: fadeInDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.logo h1 {
+.title {
     font-size: 3rem;
     font-weight: 800;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -80,6 +72,7 @@ body::before {
     background-clip: text;
     letter-spacing: -1px;
     text-shadow: 0 0 30px rgba(176, 38, 255, 0.3);
+    margin-bottom: 1rem;
 }
 
 .subtitle {
@@ -631,7 +624,7 @@ body::before {
 /* Responsive */
 @media (max-width: 768px) {
     .container { padding: 1rem; }
-    .logo h1 { font-size: 2rem; }
+    .title { font-size: 2rem; }
     .upload-zone { padding: 2.5rem 1.5rem; }
     .upload-actions { flex-direction: column; }
     .btn { width: 100%; justify-content: center; }
