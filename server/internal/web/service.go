@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"tech.low-stack.temp/server/internal/env"
 )
@@ -22,7 +23,7 @@ func Initialize() {
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+		if r.URL.Path == "/" || r.URL.Path == "/index.html" || strings.HasPrefix(r.URL.Path, "/d/") {
 			serveIndexHTML(w, fsys)
 			return
 		}
@@ -47,6 +48,7 @@ func serveIndexHTML(w http.ResponseWriter, fsys fs.FS) {
 	// Replace placeholders with actual values
 	contents = bytes.ReplaceAll(contents, []byte("/*MINIMUM_EXPIRATION_TIME_SECONDS*/"), []byte(strconv.Itoa(int(env.MinExpiration.Seconds()))))
 	contents = bytes.ReplaceAll(contents, []byte("/*MAXIMUM_EXPIRATION_TIME_SECONDS*/"), []byte(strconv.Itoa(int(env.MaxExpiration.Seconds()))))
+	contents = bytes.ReplaceAll(contents, []byte("/*DEFAULT_EXPIRATION_TIME_SECONDS*/"), []byte(strconv.Itoa(int(env.DefaultExpiration.Seconds()))))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write(contents)

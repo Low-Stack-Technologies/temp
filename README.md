@@ -54,7 +54,15 @@ You can upload multiple files by specifying multiple file paths:
 temp file1.txt file2.txt
 ```
 
-This will upload both `file1.txt` and `file2.txt` and print the download links.
+This will upload both `file1.txt` and `file2.txt` under one share. The CLI prints a direct ZIP download link followed by a link to a page where files can be downloaded individually.
+
+You can set the downloaded ZIP name for grouped uploads:
+
+```bash
+temp file1.txt file2.txt --archive-name project-files
+```
+
+Direct links created by older CLI versions continue to work. A single-file upload still returns the original direct-download URL, while grouped uploads use a ZIP archive for the direct download.
 
 ### Use self-hosted Temp Server
 
@@ -76,7 +84,7 @@ The Temp Web UI is a web-based interface for uploading and downloading files. It
 
 To access the Temp Web UI, simply visit the URL of your Temp Server. For example, the official Temp Server URL is `https://temp.lowstack.tech`.
 
-![Screenshot of the Temp Web UI](https://raw.githubusercontent.com/low-stack-technologies/temp/main/assets/web-ui.png)
+The web UI supports drag-and-drop, selecting multiple files, per-file upload progress, and copying both the direct ZIP link and the individual-download page link.
 
 ## Temp Server
 

@@ -8,6 +8,7 @@ import (
 	"tech.low-stack.temp/server/internal/download"
 	"tech.low-stack.temp/server/internal/env"
 	"tech.low-stack.temp/server/internal/expiration"
+	"tech.low-stack.temp/server/internal/group"
 	"tech.low-stack.temp/server/internal/upload"
 	"tech.low-stack.temp/server/internal/web"
 )
@@ -20,6 +21,7 @@ func main() {
 	expiration.Initialize()
 
 	upload.Initialize()
+	group.Initialize()
 	download.Initialize()
 	web.Initialize()
 	api.Initialize()

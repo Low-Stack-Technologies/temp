@@ -18,6 +18,7 @@ func main() {
 	update.CheckVersion()
 
 	expirationStr := pflag.StringP("expiration", "e", "", "Set expiration time (e.g., 5h)")
+	archiveName := pflag.String("archive-name", "", "Set the ZIP archive name for multiple files")
 	pflag.Parse()
 
 	expiration, err := parseExpiration(expirationStr)
@@ -27,7 +28,28 @@ func main() {
 	}
 
 	filePaths := pflag.Args()
-	uploadFilesIndividually(filePaths, expiration)
+	if len(filePaths) > 1 {
+		uploadFilesAsGroup(filePaths, expiration, *archiveName)
+	} else {
+		uploadFilesIndividually(filePaths, expiration)
+	}
+}
+
+func uploadFilesAsGroup(filePaths []string, expiration time.Duration, archiveName string) {
+	go func() {
+		for {
+			upload.DrawAllProgressBars()
+			time.Sleep(time.Millisecond * 100)
+		}
+	}()
+	result, err := upload.UploadGroup(filePaths, expiration, archiveName)
+	if err != nil {
+		fmt.Printf("Grouped upload unavailable, uploading files individually: %s\n", err)
+		uploadFilesIndividually(filePaths, expiration)
+		return
+	}
+	fmt.Println(result.DirectURL)
+	fmt.Println(result.PageURL)
 }
 
 func parseExpiration(expirationStr *string) (time.Duration, error) {

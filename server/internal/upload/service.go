@@ -103,6 +103,11 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 			// Calculate write limit
 			freeStorageSpace, _ := storage.GetFreeSpace()
+			if freeStorageSpace <= env.MinFreeSpace {
+				http_error.Respond(w, http.StatusInsufficientStorage, "Not enough storage space")
+				failAndDeleteFile(databaseFile, r.Context())
+				return
+			}
 			writeLimit := freeStorageSpace - env.MinFreeSpace
 			if env.MaxFileSize < writeLimit {
 				writeLimit = env.MaxFileSize

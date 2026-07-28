@@ -23,6 +23,16 @@ func Initialize() {
 func expireFiles() error {
 	ctx := context.Background()
 	qtx := db.NewQueries()
+	expiredGroups, err := storage.GetExpiredGroups(ctx)
+	if err != nil {
+		return err
+	}
+	for _, group := range expiredGroups {
+		if err := storage.DeleteGroup(ctx, group.ID); err != nil {
+			return err
+		}
+		log.Printf("Expired group (%s)", group.ID)
+	}
 
 	expiredFiles, err := qtx.GetExpiredFiles(ctx)
 	if err != nil {

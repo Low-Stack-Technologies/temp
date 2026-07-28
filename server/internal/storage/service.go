@@ -88,3 +88,66 @@ func GetFreeSpace() (uint64, error) {
 func GetStoragePath(id string) string {
 	return path.Join(env.StoragePath, id)
 }
+
+func RequestNewGroup(ctx context.Context, expiration time.Duration, archiveName *string) (string, error) {
+	id := newUuid()
+	_, err := db.CreateGroup(ctx, id, expiration, archiveName)
+	return id, err
+}
+
+func StoreGroupFile(ctx context.Context, groupID, filename string, src io.Reader, limit uint64) (db.GroupFile, error) {
+	id := newUuid()
+	filePath := GetStoragePath(id)
+	fileWriter, err := os.Create(filePath)
+	if err != nil {
+		return db.GroupFile{}, err
+	}
+	written, err := io.Copy(fileWriter, io.LimitReader(src, int64(limit)+1))
+	if err != nil {
+		fileWriter.Close()
+		_ = os.Remove(filePath)
+		return db.GroupFile{}, err
+	}
+	if written > int64(limit) {
+		fileWriter.Close()
+		_ = os.Remove(filePath)
+		return db.GroupFile{}, fmt.Errorf("file size exceeds limit")
+	}
+	if err = fileWriter.Close(); err != nil {
+		_ = os.Remove(filePath)
+		return db.GroupFile{}, err
+	}
+	file := db.GroupFile{ID: id, GroupID: groupID, Filename: filename, Size: written}
+	if err = db.CreateGroupFile(ctx, file); err != nil {
+		_ = os.Remove(filePath)
+		return db.GroupFile{}, err
+	}
+	return file, nil
+}
+
+func GetGroup(ctx context.Context, id string) (db.Group, error) { return db.GetGroup(ctx, id) }
+
+func GetGroupFiles(ctx context.Context, id string) ([]db.GroupFile, error) {
+	return db.GetGroupFiles(ctx, id)
+}
+
+func GetGroupFile(ctx context.Context, groupID, fileID string) (db.GroupFile, error) {
+	return db.GetGroupFile(ctx, groupID, fileID)
+}
+
+func FinalizeGroup(ctx context.Context, id string) error { return db.FinalizeGroup(ctx, id) }
+
+func DeleteGroup(ctx context.Context, id string) error {
+	files, err := db.GetGroupFiles(ctx, id)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		if err := os.Remove(GetStoragePath(file.ID)); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	return db.DeleteGroup(ctx, id)
+}
+
+func GetExpiredGroups(ctx context.Context) ([]db.Group, error) { return db.GetExpiredGroups(ctx) }

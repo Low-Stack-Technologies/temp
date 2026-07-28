@@ -51,7 +51,9 @@ func UploadFile(filePath string, index int, expiration time.Duration) (string, e
 	}
 
 	// Add progress reader to progress readers
+	progressMutex.Lock()
 	progressBars = append(progressBars, progress)
+	progressMutex.Unlock()
 
 	// Start upload in goroutine
 	errChan := make(chan error)
@@ -113,8 +115,12 @@ func (pr *ProgressReader) Read(p []byte) (int, error) {
 }
 
 func sendRequest(pr *io.PipeReader, writer *multipart.Writer) (string, error) {
+	return sendRequestTo(pr, writer, env.ServiceUrl)
+}
+
+func sendRequestTo(pr *io.PipeReader, writer *multipart.Writer, url string) (string, error) {
 	// Create request
-	req, err := http.NewRequest("POST", env.ServiceUrl, pr)
+	req, err := http.NewRequest("POST", url, pr)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
